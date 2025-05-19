@@ -8,8 +8,8 @@ bin/
 
 ### IntelliJ IDEA ###
 .idea/
-*.iws
 *.iml
+*.iws
 *.ipr
 out/
 !**/src/main/**/out/

@@ -5,4 +5,4 @@
  * - Data validation
  * - Data transformation
  */
-package com.f1champions.dto 
+package com.f1champions.client.ergast.dto
