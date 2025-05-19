@@ -1,14 +1,15 @@
 ### Gradle ###
 .gradle/
 build/
+bin/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
 
 ### IntelliJ IDEA ###
 .idea/
-*.iws
 *.iml
+*.iws
 *.ipr
 out/
 !**/src/main/**/out/
