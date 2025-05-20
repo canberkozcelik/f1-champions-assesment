@@ -7,6 +7,7 @@ plugins {
     kotlin("plugin.spring") version "1.9.22"
     kotlin("plugin.jpa") version "1.9.22"
     id("org.jlleitschuh.gradle.ktlint") version "11.5.0"
+    id("jacoco")
 }
 
 group = "com.f1champions"
@@ -60,4 +61,58 @@ tasks.withType<KotlinCompile> {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+tasks.jacocoTestReport {
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+    classDirectories.setFrom(
+        fileTree("${project.buildDir}/classes/kotlin/main") {
+            exclude(
+                "**/config/**",
+                "**/dto/**",
+                "**/common/**",
+                "**/entity/**",
+                "**/exception/**"
+            )
+        }
+    )
+    sourceDirectories.setFrom(files("src/main/kotlin"))
+    executionData.setFrom(files("${project.buildDir}/jacoco/test.exec"))
+
+    dependsOn(tasks.test)
+}
+
+tasks.jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = "0.7".toBigDecimal()
+            }
+        }
+    }
+    classDirectories.setFrom(
+        fileTree("${project.buildDir}/classes/kotlin/main") {
+            exclude(
+                "**/config/**",
+                "**/dto/**",
+                "**/common/**",
+                "**/entity/**",
+                "**/exception/**"
+            )
+        }
+    )
+    executionData.setFrom(files("${project.buildDir}/jacoco/test.exec"))
+    dependsOn(tasks.jacocoTestReport)
+}
+
+tasks.test {
+    finalizedBy(tasks.jacocoTestReport)
+    finalizedBy(tasks.jacocoTestCoverageVerification)
+}
+
+jacoco {
+    toolVersion = "0.8.11"
 }
