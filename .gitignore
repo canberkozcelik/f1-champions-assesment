@@ -24,7 +24,9 @@ out/
 *.log
 *.ctxt
 .mtj.tmp/
+# Ignore all JARs except gradle-wrapper.jar
 *.jar
+!gradle/wrapper/gradle-wrapper.jar
 *.war
 *.nar
 *.ear
