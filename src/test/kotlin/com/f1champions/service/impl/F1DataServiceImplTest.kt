@@ -526,7 +526,13 @@ class F1DataServiceImplTest {
         coEvery { webClient.get() } returns mockk(relaxed = true)
         coEvery { webClient.get().uri("/2023/driverStandings/1.json") } returns mockk(relaxed = true)
         coEvery { webClient.get().uri("/2023/driverStandings/1.json").retrieve() } returns mockk(relaxed = true)
-        coEvery { webClient.get().uri("/2023/driverStandings/1.json").retrieve().bodyToMono<ErgastDriverStandingsDto>() } throws WebClientResponseException(500, "Internal Server Error", null, null, null)
+        coEvery { webClient.get().uri("/2023/driverStandings/1.json").retrieve().bodyToMono<ErgastDriverStandingsDto>() } throws WebClientResponseException(
+            500,
+            "Internal Server Error",
+            null,
+            null,
+            null
+        )
 
         // When
         val result = f1DataService.ensureSeasonsDataPopulated()
@@ -597,10 +603,18 @@ class F1DataServiceImplTest {
         coEvery { webClient.get() } returns mockk(relaxed = true)
         coEvery { webClient.get().uri("/2023/driverStandings/1.json") } returns mockk(relaxed = true)
         coEvery { webClient.get().uri("/2023/driverStandings/1.json").retrieve() } returns mockk(relaxed = true)
-        coEvery { webClient.get().uri("/2023/driverStandings/1.json").retrieve().bodyToMono<ErgastDriverStandingsDto>() } returns Mono.just(ergastResponse2023)
+        coEvery { webClient.get().uri("/2023/driverStandings/1.json").retrieve().bodyToMono<ErgastDriverStandingsDto>() } returns Mono.just(
+            ergastResponse2023
+        )
         coEvery { webClient.get().uri("/2024/driverStandings/1.json") } returns mockk(relaxed = true)
         coEvery { webClient.get().uri("/2024/driverStandings/1.json").retrieve() } returns mockk(relaxed = true)
-        coEvery { webClient.get().uri("/2024/driverStandings/1.json").retrieve().bodyToMono<ErgastDriverStandingsDto>() } throws WebClientResponseException(500, "Internal Server Error", null, null, null)
+        coEvery { webClient.get().uri("/2024/driverStandings/1.json").retrieve().bodyToMono<ErgastDriverStandingsDto>() } throws WebClientResponseException(
+            500,
+            "Internal Server Error",
+            null,
+            null,
+            null
+        )
         coEvery { seasonRepository.save(any()) } returns SeasonEntity(
             year = 2023,
             championName = "Max Verstappen",
