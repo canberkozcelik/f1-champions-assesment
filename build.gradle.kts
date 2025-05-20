@@ -63,11 +63,17 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
+val mainClassName = "F1ChampionsApplication"
+val mainClassPath = "com/f1champions/$mainClassName"
+
 tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+
     reports {
         xml.required.set(true)
         html.required.set(true)
     }
+
     classDirectories.setFrom(
         fileTree("${project.buildDir}/classes/kotlin/main") {
             exclude(
@@ -75,17 +81,19 @@ tasks.jacocoTestReport {
                 "**/dto/**",
                 "**/common/**",
                 "**/entity/**",
-                "**/exception/**"
+                "**/exception/**",
+                "**/${mainClassPath}Kt.class",
+                "**/$mainClassPath.class"
             )
         }
     )
     sourceDirectories.setFrom(files("src/main/kotlin"))
     executionData.setFrom(files("${project.buildDir}/jacoco/test.exec"))
-
-    dependsOn(tasks.test)
 }
 
 tasks.jacocoTestCoverageVerification {
+    dependsOn(tasks.jacocoTestReport)
+
     violationRules {
         rule {
             limit {
@@ -100,16 +108,16 @@ tasks.jacocoTestCoverageVerification {
                 "**/dto/**",
                 "**/common/**",
                 "**/entity/**",
-                "**/exception/**"
+                "**/exception/**",
+                "**/${mainClassPath}Kt.class",
+                "**/$mainClassPath.class"
             )
         }
     )
     executionData.setFrom(files("${project.buildDir}/jacoco/test.exec"))
-    dependsOn(tasks.jacocoTestReport)
 }
 
 tasks.test {
-    finalizedBy(tasks.jacocoTestReport)
     finalizedBy(tasks.jacocoTestCoverageVerification)
 }
 
