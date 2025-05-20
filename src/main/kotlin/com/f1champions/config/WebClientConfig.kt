@@ -13,4 +13,4 @@ class WebClientConfig {
             .baseUrl("http://ergast.com/api/f1")
             .build()
     }
-} 
+}

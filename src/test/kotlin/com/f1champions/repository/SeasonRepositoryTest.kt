@@ -8,8 +8,8 @@ import org.springframework.test.context.ActiveProfiles
 import java.time.Year
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 @DataJpaTest
 @ActiveProfiles("test")
@@ -94,7 +94,7 @@ class SeasonRepositoryTest {
     fun `should handle minimum valid year`() {
         // Given
         val season = SeasonEntity(
-            year = 2005,  // First supported season
+            year = 2005, // First supported season
             championName = "Fernando Alonso",
             championDriverId = "fernando_alonso",
             championPoints = 133,

@@ -5,4 +5,4 @@
  * - Handling request/response DTOs
  * - Basic input validation
  */
-package com.f1champions.controller 
+package com.f1champions.controller

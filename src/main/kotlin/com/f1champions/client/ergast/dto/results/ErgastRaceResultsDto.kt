@@ -44,4 +44,4 @@ data class RaceResultDto(
     @JsonProperty("grid") val grid: String,
     @JsonProperty("laps") val laps: String,
     @JsonProperty("status") val status: String
-) 
+)

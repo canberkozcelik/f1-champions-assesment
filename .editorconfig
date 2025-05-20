@@ -1,0 +1,25 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+max_line_length = 120
+
+[*.{kt,kts}]
+ktlint_standard_filename = false
+ktlint_standard_trailing-comma-on-call-site = true
+ktlint_standard_trailing-comma-on-declaration-site = true
+ktlint_standard_wildcard-imports = false
+
+[**/package-info.kt]
+ktlint_standard_filename = false
+ktlint_disabled_rules = filename
+
+[**/test/**/*.kt]
+max_line_length = 160
+ktlint_standard_argument-list-wrapping = false
+ktlint_standard_wrapping = false 

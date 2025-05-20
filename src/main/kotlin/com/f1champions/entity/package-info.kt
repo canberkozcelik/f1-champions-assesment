@@ -5,4 +5,4 @@
  * - Entity relationships
  * - Data validation
  */
-package com.f1champions.entity 
+package com.f1champions.entity

@@ -1,20 +1,22 @@
 package com.f1champions.service.impl
 
-import com.f1champions.api.dto.SeasonDto
 import com.f1champions.api.dto.RaceDto
+import com.f1champions.api.dto.SeasonDto
 import com.f1champions.client.ergast.dto.results.ErgastRaceResultsDto
 import com.f1champions.client.ergast.dto.standings.ErgastDriverStandingsDto
-import com.f1champions.entity.SeasonEntity
 import com.f1champions.entity.RaceEntity
-import com.f1champions.repository.SeasonRepository
+import com.f1champions.entity.SeasonEntity
 import com.f1champions.repository.RaceRepository
+import com.f1champions.repository.SeasonRepository
 import com.f1champions.service.F1DataService
 import kotlinx.coroutines.reactor.awaitSingleOrNull
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.bodyToMono
-import java.time.Year
 import java.time.LocalDate
+import java.time.Year
 import java.time.format.DateTimeFormatter
 
 @Service
@@ -23,6 +25,8 @@ class F1DataServiceImpl(
     private val raceRepository: RaceRepository,
     private val webClient: WebClient
 ) : F1DataService {
+
+    private val logger: Logger = LoggerFactory.getLogger(this::class.java)
 
     override suspend fun ensureSeasonsDataPopulated(): Boolean {
         val currentYear = Year.now().value
@@ -53,11 +57,12 @@ class F1DataServiceImpl(
                             championWins = driverStanding.wins.toInt()
                         )
                         seasonRepository.save(seasonEntity)
+                        logger.info("Saved season data for year $year")
                     }
                 }
             } catch (e: Exception) {
                 // Log error but continue with other years
-                println("Error fetching data for year $year: ${e.message}")
+                logger.error("Error fetching season data for year $year: ${e.message}")
             }
         }
 
@@ -77,7 +82,9 @@ class F1DataServiceImpl(
 
         // Check if season exists
         val season = seasonRepository.findById(year).orElseThrow {
-            NoSuchElementException("Season data for year $year not found. Please ensure season data is populated first.")
+            NoSuchElementException(
+                "Season data for year $year not found. Please ensure season data is populated first."
+            )
         }
 
         // Check if races exist for this season
@@ -143,4 +150,4 @@ class F1DataServiceImpl(
         winningConstructorName = winningConstructorName,
         isSeasonChampionWinner = isSeasonChampionWinner
     )
-} 
+}

@@ -10,7 +10,10 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/seasons")
@@ -25,10 +28,12 @@ class F1Controller(
             ApiResponse(
                 responseCode = "200",
                 description = "Successfully retrieved seasons",
-                content = [Content(
-                    mediaType = "application/json",
-                    schema = Schema(implementation = SeasonDto::class)
-                )]
+                content = [
+                    Content(
+                        mediaType = "application/json",
+                        schema = Schema(implementation = SeasonDto::class)
+                    )
+                ]
             )
         ]
     )
@@ -45,10 +50,12 @@ class F1Controller(
             ApiResponse(
                 responseCode = "200",
                 description = "Successfully retrieved races",
-                content = [Content(
-                    mediaType = "application/json",
-                    schema = Schema(implementation = RaceDto::class)
-                )]
+                content = [
+                    Content(
+                        mediaType = "application/json",
+                        schema = Schema(implementation = RaceDto::class)
+                    )
+                ]
             ),
             ApiResponse(
                 responseCode = "404",
@@ -59,9 +66,10 @@ class F1Controller(
     @GetMapping("/{year}/races")
     suspend fun getRacesForSeason(
         @Parameter(description = "Year of the F1 season", example = "2023")
-        @PathVariable year: Int
+        @PathVariable
+        year: Int
     ): ResponseEntity<List<RaceDto>> {
         val races = f1DataService.getRacesForSeason(year)
         return ResponseEntity.ok(races)
     }
-} 
+}

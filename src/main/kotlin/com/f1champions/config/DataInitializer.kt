@@ -2,8 +2,8 @@ package com.f1champions.config
 
 import com.f1champions.service.F1DataService
 import jakarta.annotation.PostConstruct
-import org.springframework.stereotype.Component
 import kotlinx.coroutines.runBlocking
+import org.springframework.stereotype.Component
 
 @Component
 class DataInitializer(
@@ -15,4 +15,4 @@ class DataInitializer(
             f1DataService.ensureSeasonsDataPopulated()
         }
     }
-} 
+}
