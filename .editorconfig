@@ -15,7 +15,7 @@ ktlint_standard_trailing-comma-on-call-site = true
 ktlint_standard_trailing-comma-on-declaration-site = true
 ktlint_standard_wildcard-imports = false
 
-[package-info.kt]
+[**/package-info.kt]
 ktlint_standard_filename = false
 
 [**/test/**/*.kt]
