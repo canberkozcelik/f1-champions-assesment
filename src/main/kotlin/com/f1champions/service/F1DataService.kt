@@ -1,7 +1,7 @@
 package com.f1champions.service
 
-import com.f1champions.api.dto.SeasonDto
 import com.f1champions.api.dto.RaceDto
+import com.f1champions.api.dto.SeasonDto
 
 interface F1DataService {
     /**
@@ -24,4 +24,4 @@ interface F1DataService {
      * @throws NoSuchElementException if season data is not found
      */
     suspend fun getRacesForSeason(year: Int): List<RaceDto>
-} 
+}

@@ -8,4 +8,4 @@ class F1ChampionsApplication
 
 fun main(args: Array<String>) {
     runApplication<F1ChampionsApplication>(*args)
-} 
+}

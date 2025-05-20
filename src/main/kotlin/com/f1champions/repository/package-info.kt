@@ -5,4 +5,4 @@
  * - Database queries
  * - Entity persistence
  */
-package com.f1champions.repository 
+package com.f1champions.repository

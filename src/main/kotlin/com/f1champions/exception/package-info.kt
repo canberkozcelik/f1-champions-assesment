@@ -5,4 +5,4 @@
  * - Global exception handling
  * - Error response formatting
  */
-package com.f1champions.exception 
+package com.f1champions.exception

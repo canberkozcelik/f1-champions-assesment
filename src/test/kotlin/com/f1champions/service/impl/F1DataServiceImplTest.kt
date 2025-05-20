@@ -4,8 +4,15 @@ import com.f1champions.client.ergast.common.ErgastCircuitDto
 import com.f1champions.client.ergast.common.ErgastConstructorDto
 import com.f1champions.client.ergast.common.ErgastDriverDto
 import com.f1champions.client.ergast.common.ErgastLocationDto
-import com.f1champions.client.ergast.dto.standings.*
-import com.f1champions.client.ergast.dto.results.*
+import com.f1champions.client.ergast.dto.results.ErgastRaceResultsDto
+import com.f1champions.client.ergast.dto.results.MRDataRaceResultsDto
+import com.f1champions.client.ergast.dto.results.RaceResultDto
+import com.f1champions.client.ergast.dto.results.RaceTableDto
+import com.f1champions.client.ergast.dto.standings.DriverStandingDto
+import com.f1champions.client.ergast.dto.standings.ErgastDriverStandingsDto
+import com.f1champions.client.ergast.dto.standings.MRDataStandingsDto
+import com.f1champions.client.ergast.dto.standings.StandingsListDto
+import com.f1champions.client.ergast.dto.standings.StandingsTableDto
 import com.f1champions.entity.RaceEntity
 import com.f1champions.entity.SeasonEntity
 import com.f1champions.repository.RaceRepository
@@ -680,4 +687,4 @@ class F1DataServiceImplTest {
         assertTrue(result) // Should return true as we attempted to fetch data
         coVerify(exactly = 0) { seasonRepository.save(any()) } // Should not save due to invalid data
     }
-} 
+}

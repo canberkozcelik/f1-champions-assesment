@@ -37,4 +37,4 @@ data class RaceDto(
     @Schema(description = "Indicates if the race winner is also the season champion", example = "true")
     @JsonProperty("isSeasonChampionWinner")
     val isSeasonChampionWinner: Boolean
-) 
+)

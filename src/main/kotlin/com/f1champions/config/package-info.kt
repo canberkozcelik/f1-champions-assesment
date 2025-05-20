@@ -5,4 +5,4 @@
  * - External service configurations
  * - Application properties
  */
-package com.f1champions.config 
+package com.f1champions.config

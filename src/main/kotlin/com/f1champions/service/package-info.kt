@@ -6,4 +6,4 @@
  * - Integration with external APIs (Ergast)
  * - Transaction management
  */
-package com.f1champions.service 
+package com.f1champions.service

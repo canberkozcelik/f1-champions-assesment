@@ -11,4 +11,4 @@ interface SeasonRepository : JpaRepository<SeasonEntity, Int> {
      * @return list of seasons ordered by year
      */
     fun findAllByOrderByYearAsc(): List<SeasonEntity>
-} 
+}

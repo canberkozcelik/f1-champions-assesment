@@ -162,4 +162,4 @@ class RaceRepositoryTest {
         assertEquals(2, retrievedRaces.size)
         assertTrue(retrievedRaces.all { it.season.year == 2023 })
     }
-} 
+}

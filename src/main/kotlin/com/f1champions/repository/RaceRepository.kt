@@ -15,4 +15,4 @@ interface RaceRepository : JpaRepository<RaceEntity, Long> {
      * @return A list of RaceEntity objects for that season, ordered by round.
      */
     fun findBySeasonYearOrderByRoundAsc(seasonYear: Int): List<RaceEntity>
-} 
+}
