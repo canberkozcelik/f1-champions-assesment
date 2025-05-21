@@ -15,8 +15,11 @@ import com.f1champions.client.ergast.dto.standings.StandingsListDto
 import com.f1champions.client.ergast.dto.standings.StandingsTableDto
 import com.f1champions.entity.RaceEntity
 import com.f1champions.entity.SeasonEntity
+import com.f1champions.exception.ErgastApiDataNotFoundException
+import com.f1champions.exception.ErgastApiServiceUnavailableException
 import com.f1champions.repository.RaceRepository
 import com.f1champions.repository.SeasonRepository
+import com.f1champions.service.ErgastApiClient
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -24,10 +27,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClientResponseException
-import org.springframework.web.reactive.function.client.bodyToMono
-import reactor.core.publisher.Mono
 import java.time.LocalDate
 import java.time.Year
 import java.util.*
@@ -40,15 +39,15 @@ class F1DataServiceImplTest {
 
     private lateinit var seasonRepository: SeasonRepository
     private lateinit var raceRepository: RaceRepository
-    private lateinit var webClient: WebClient
+    private lateinit var ergastApiClient: ErgastApiClient
     private lateinit var f1DataService: F1DataServiceImpl
 
     @BeforeEach
     fun setup() {
         seasonRepository = mockk()
         raceRepository = mockk()
-        webClient = mockk()
-        f1DataService = F1DataServiceImpl(seasonRepository, raceRepository, webClient)
+        ergastApiClient = mockk()
+        f1DataService = F1DataServiceImpl(seasonRepository, raceRepository, ergastApiClient)
     }
 
     @Test
@@ -223,10 +222,7 @@ class F1DataServiceImplTest {
 
         coEvery { seasonRepository.findById(year) } returns Optional.of(season)
         coEvery { raceRepository.findBySeasonYearOrderByRoundAsc(year) } returns emptyList()
-        coEvery { webClient.get() } returns mockk(relaxed = true)
-        coEvery { webClient.get().uri("/$year/results/1.json") } returns mockk(relaxed = true)
-        coEvery { webClient.get().uri("/$year/results/1.json").retrieve() } returns mockk(relaxed = true)
-        coEvery { webClient.get().uri("/$year/results/1.json").retrieve().bodyToMono<ErgastRaceResultsDto>() } returns Mono.just(ergastResponse)
+        coEvery { ergastApiClient.getRaceResults(year) } returns ergastResponse
         coEvery { raceRepository.saveAll(any<List<RaceEntity>>()) } returns listOf(
             RaceEntity(
                 season = season,
@@ -253,6 +249,7 @@ class F1DataServiceImplTest {
         assertEquals("Max Verstappen", result[0].winningDriverName)
         assertTrue(result[0].isSeasonChampionWinner)
         coVerify { raceRepository.saveAll(any<List<RaceEntity>>()) }
+        coVerify { ergastApiClient.getRaceResults(year) }
     }
 
     @Test
@@ -268,16 +265,13 @@ class F1DataServiceImplTest {
         )
         coEvery { seasonRepository.findById(year) } returns Optional.of(season)
         coEvery { raceRepository.findBySeasonYearOrderByRoundAsc(year) } returns emptyList()
-        coEvery { webClient.get() } returns mockk(relaxed = true)
-        coEvery { webClient.get().uri("/$year/results/1.json") } returns mockk(relaxed = true)
-        coEvery { webClient.get().uri("/$year/results/1.json").retrieve() } returns mockk(relaxed = true)
-        coEvery { webClient.get().uri("/$year/results/1.json").retrieve().bodyToMono<ErgastRaceResultsDto>() } returns Mono.empty()
+        coEvery { ergastApiClient.getRaceResults(year) } throws ErgastApiDataNotFoundException("No race results data found for year $year")
 
         // When/Then
         val exception = assertThrows<IllegalStateException> {
             f1DataService.getRacesForSeason(year)
         }
-        assertEquals("Failed to process race data for year $year: Failed to fetch race data from Ergast API for year $year", exception.message)
+        assertEquals("Failed to process race data for year $year: No race results data found for year $year", exception.message)
     }
 
     @Test
@@ -308,10 +302,7 @@ class F1DataServiceImplTest {
 
         coEvery { seasonRepository.findById(year) } returns Optional.of(season)
         coEvery { raceRepository.findBySeasonYearOrderByRoundAsc(year) } returns emptyList()
-        coEvery { webClient.get() } returns mockk(relaxed = true)
-        coEvery { webClient.get().uri("/$year/results/1.json") } returns mockk(relaxed = true)
-        coEvery { webClient.get().uri("/$year/results/1.json").retrieve() } returns mockk(relaxed = true)
-        coEvery { webClient.get().uri("/$year/results/1.json").retrieve().bodyToMono<ErgastRaceResultsDto>() } returns Mono.just(ergastResponse)
+        coEvery { ergastApiClient.getRaceResults(year) } returns ergastResponse
         coEvery { raceRepository.saveAll(emptyList<RaceEntity>()) } returns emptyList()
 
         // When
@@ -320,6 +311,7 @@ class F1DataServiceImplTest {
         // Then
         assertTrue(result.isEmpty())
         coVerify(exactly = 1) { raceRepository.saveAll(emptyList<RaceEntity>()) }
+        coVerify { ergastApiClient.getRaceResults(year) }
     }
 
     @Test
@@ -396,10 +388,7 @@ class F1DataServiceImplTest {
 
         coEvery { seasonRepository.findById(year) } returns Optional.of(season)
         coEvery { raceRepository.findBySeasonYearOrderByRoundAsc(year) } returns emptyList()
-        coEvery { webClient.get() } returns mockk(relaxed = true)
-        coEvery { webClient.get().uri("/$year/results/1.json") } returns mockk(relaxed = true)
-        coEvery { webClient.get().uri("/$year/results/1.json").retrieve() } returns mockk(relaxed = true)
-        coEvery { webClient.get().uri("/$year/results/1.json").retrieve().bodyToMono<ErgastRaceResultsDto>() } returns Mono.just(ergastResponse)
+        coEvery { ergastApiClient.getRaceResults(year) } returns ergastResponse
 
         // When/Then
         val exception = assertThrows<IllegalStateException> {
@@ -410,7 +399,7 @@ class F1DataServiceImplTest {
     }
 
     @Test
-    fun `ensureSeasonsDataPopulated should return false when no data needs to be fetched`() = runBlocking {
+    fun `ensureSeasonsDataPopulated should return true when all seasons are already populated`() = runBlocking {
         // Given
         val currentYear = Year.now().value
         val existingSeasons = (2005..currentYear).map { year ->
@@ -428,13 +417,15 @@ class F1DataServiceImplTest {
         val result = f1DataService.ensureSeasonsDataPopulated()
 
         // Then
-        assertFalse(result)
-        coVerify(exactly = 0) { webClient.get() }
+        assertTrue(result) // Should return true because all seasons are already populated
+        coVerify(exactly = 0) { ergastApiClient.getDriverStandings(any()) } // Should not try to fetch any data
+        coVerify(exactly = 0) { seasonRepository.save(any()) } // Should not try to save any data
     }
 
     @Test
-    fun `ensureSeasonsDataPopulated should fetch and save missing seasons`() = runBlocking {
+    fun `ensureSeasonsDataPopulated should return false when no new data could be fetched`() = runBlocking {
         // Given
+        val currentYear = Year.now().value
         val existingSeasons = listOf(
             SeasonEntity(
                 year = 2022,
@@ -444,41 +435,85 @@ class F1DataServiceImplTest {
                 championWins = 15
             )
         )
-        val ergastResponse = ErgastDriverStandingsDto(
-            mrData = MRDataStandingsDto(
-                xmlns = "http://ergast.com/mrd/1.5",
-                series = "f1",
-                url = "http://ergast.com/api/f1/2023/driverStandings/1.json",
-                limit = "30",
-                offset = "0",
-                total = "1",
-                standingsTable = StandingsTableDto(
-                    season = "2023",
-                    standingsLists = listOf(
-                        StandingsListDto(
-                            season = "2023",
-                            round = "22",
-                            driverStandings = listOf(
-                                DriverStandingDto(
-                                    position = "1",
-                                    points = "454",
-                                    wins = "19",
-                                    driver = ErgastDriverDto(
-                                        driverId = "max_verstappen",
-                                        permanentNumber = "33",
-                                        code = "VER",
-                                        url = "http://en.wikipedia.org/wiki/Max_Verstappen",
-                                        givenName = "Max",
-                                        familyName = "Verstappen",
-                                        dateOfBirth = "1997-09-30",
-                                        nationality = "Dutch"
-                                    ),
-                                    constructors = listOf(
-                                        ErgastConstructorDto(
-                                            constructorId = "red_bull",
-                                            url = "http://en.wikipedia.org/wiki/Red_Bull_Racing",
-                                            name = "Red Bull Racing",
-                                            nationality = "Austrian"
+
+        // Mock error responses for all years from 2005 to current year
+        (2005..currentYear).forEach { year ->
+            if (year != 2022) { // Skip 2022 as it's already in existingSeasons
+                coEvery { ergastApiClient.getDriverStandings(year) } throws ErgastApiServiceUnavailableException(
+                    "Error fetching driver standings data: Internal Server Error"
+                )
+            }
+        }
+
+        coEvery { seasonRepository.findAll() } returns existingSeasons
+
+        // When
+        val result = f1DataService.ensureSeasonsDataPopulated()
+
+        // Then
+        assertFalse(result) // Should return false because no new data was fetched
+        coVerify(exactly = 0) { seasonRepository.save(any()) } // Should not save any data
+        (2005..currentYear).forEach { year ->
+            if (year != 2022) {
+                coVerify { ergastApiClient.getDriverStandings(year) } // Verify all years were attempted
+            }
+        }
+    }
+
+    @Test
+    fun `ensureSeasonsDataPopulated should fetch and save missing seasons`() = runBlocking {
+        // Given
+        val currentYear = Year.now().value
+        val existingSeasons = listOf(
+            SeasonEntity(
+                year = 2022,
+                championName = "Max Verstappen",
+                championDriverId = "max_verstappen",
+                championPoints = 454,
+                championWins = 15
+            )
+        )
+
+        // Mock responses for all years from 2005 to current year
+        (2005..currentYear).forEach { year ->
+            if (year != 2022) { // Skip 2022 as it's already in existingSeasons
+                val ergastResponse = ErgastDriverStandingsDto(
+                    mrData = MRDataStandingsDto(
+                        xmlns = "http://ergast.com/mrd/1.5",
+                        series = "f1",
+                        url = "http://ergast.com/api/f1/$year/driverStandings/1.json",
+                        limit = "30",
+                        offset = "0",
+                        total = "1",
+                        standingsTable = StandingsTableDto(
+                            season = year.toString(),
+                            standingsLists = listOf(
+                                StandingsListDto(
+                                    season = year.toString(),
+                                    round = "22",
+                                    driverStandings = listOf(
+                                        DriverStandingDto(
+                                            position = "1",
+                                            points = "454",
+                                            wins = "19",
+                                            driver = ErgastDriverDto(
+                                                driverId = "max_verstappen",
+                                                permanentNumber = "33",
+                                                code = "VER",
+                                                url = "http://en.wikipedia.org/wiki/Max_Verstappen",
+                                                givenName = "Max",
+                                                familyName = "Verstappen",
+                                                dateOfBirth = "1997-09-30",
+                                                nationality = "Dutch"
+                                            ),
+                                            constructors = listOf(
+                                                ErgastConstructorDto(
+                                                    constructorId = "red_bull",
+                                                    url = "http://en.wikipedia.org/wiki/Red_Bull_Racing",
+                                                    name = "Red Bull Racing",
+                                                    nationality = "Austrian"
+                                                )
+                                            )
                                         )
                                     )
                                 )
@@ -486,33 +521,36 @@ class F1DataServiceImplTest {
                         )
                     )
                 )
-            )
-        )
+                coEvery { ergastApiClient.getDriverStandings(year) } returns ergastResponse
+                coEvery { seasonRepository.save(any()) } returns SeasonEntity(
+                    year = year,
+                    championName = "Max Verstappen",
+                    championDriverId = "max_verstappen",
+                    championPoints = 454,
+                    championWins = 19
+                )
+            }
+        }
 
         coEvery { seasonRepository.findAll() } returns existingSeasons
-        coEvery { webClient.get() } returns mockk(relaxed = true)
-        coEvery { webClient.get().uri("/2023/driverStandings/1.json") } returns mockk(relaxed = true)
-        coEvery { webClient.get().uri("/2023/driverStandings/1.json").retrieve() } returns mockk(relaxed = true)
-        coEvery { webClient.get().uri("/2023/driverStandings/1.json").retrieve().bodyToMono<ErgastDriverStandingsDto>() } returns Mono.just(ergastResponse)
-        coEvery { seasonRepository.save(any()) } returns SeasonEntity(
-            year = 2023,
-            championName = "Max Verstappen",
-            championDriverId = "max_verstappen",
-            championPoints = 454,
-            championWins = 19
-        )
 
         // When
         val result = f1DataService.ensureSeasonsDataPopulated()
 
         // Then
         assertTrue(result)
-        coVerify { seasonRepository.save(any()) }
+        coVerify(exactly = currentYear - 2005) { seasonRepository.save(any()) } // Should save all years except 2022
+        (2005..currentYear).forEach { year ->
+            if (year != 2022) {
+                coVerify { ergastApiClient.getDriverStandings(year) }
+            }
+        }
     }
 
     @Test
     fun `ensureSeasonsDataPopulated should handle API errors gracefully`() = runBlocking {
         // Given
+        val currentYear = Year.now().value
         val existingSeasons = listOf(
             SeasonEntity(
                 year = 2022,
@@ -522,118 +560,92 @@ class F1DataServiceImplTest {
                 championWins = 15
             )
         )
-        coEvery { seasonRepository.findAll() } returns existingSeasons
-        coEvery { webClient.get() } returns mockk(relaxed = true)
-        coEvery { webClient.get().uri("/2023/driverStandings/1.json") } returns mockk(relaxed = true)
-        coEvery { webClient.get().uri("/2023/driverStandings/1.json").retrieve() } returns mockk(relaxed = true)
-        coEvery { webClient.get().uri("/2023/driverStandings/1.json").retrieve().bodyToMono<ErgastDriverStandingsDto>() } throws WebClientResponseException(
-            500,
-            "Internal Server Error",
-            null,
-            null,
-            null
-        )
 
-        // When
-        val result = f1DataService.ensureSeasonsDataPopulated()
-
-        // Then
-        assertTrue(result) // Should still return true as we attempted to fetch data
-        coVerify(exactly = 0) { seasonRepository.save(any()) }
-    }
-
-    @Test
-    fun `ensureSeasonsDataPopulated should handle partial success`() = runBlocking {
-        // Given
-        val existingSeasons = listOf(
-            SeasonEntity(
-                year = 2022,
-                championName = "Max Verstappen",
-                championDriverId = "max_verstappen",
-                championPoints = 454,
-                championWins = 15
-            )
-        )
-        val ergastResponse2023 = ErgastDriverStandingsDto(
-            mrData = MRDataStandingsDto(
-                xmlns = "http://ergast.com/mrd/1.5",
-                series = "f1",
-                url = "http://ergast.com/api/f1/2023/driverStandings/1.json",
-                limit = "30",
-                offset = "0",
-                total = "1",
-                standingsTable = StandingsTableDto(
-                    season = "2023",
-                    standingsLists = listOf(
-                        StandingsListDto(
-                            season = "2023",
-                            round = "22",
-                            driverStandings = listOf(
-                                DriverStandingDto(
-                                    position = "1",
-                                    points = "454",
-                                    wins = "19",
-                                    driver = ErgastDriverDto(
-                                        driverId = "max_verstappen",
-                                        permanentNumber = "33",
-                                        code = "VER",
-                                        url = "http://en.wikipedia.org/wiki/Max_Verstappen",
-                                        givenName = "Max",
-                                        familyName = "Verstappen",
-                                        dateOfBirth = "1997-09-30",
-                                        nationality = "Dutch"
-                                    ),
-                                    constructors = listOf(
-                                        ErgastConstructorDto(
-                                            constructorId = "red_bull",
-                                            url = "http://en.wikipedia.org/wiki/Red_Bull_Racing",
-                                            name = "Red Bull Racing",
-                                            nationality = "Austrian"
+        // Mock responses for all years from 2005 to current year
+        (2005..currentYear).forEach { year ->
+            if (year != 2022) { // Skip 2022 as it's already in existingSeasons
+                if (year == 2023) {
+                    // Success case for 2023
+                    val ergastResponse = ErgastDriverStandingsDto(
+                        mrData = MRDataStandingsDto(
+                            xmlns = "http://ergast.com/mrd/1.5",
+                            series = "f1",
+                            url = "http://ergast.com/api/f1/$year/driverStandings/1.json",
+                            limit = "30",
+                            offset = "0",
+                            total = "1",
+                            standingsTable = StandingsTableDto(
+                                season = year.toString(),
+                                standingsLists = listOf(
+                                    StandingsListDto(
+                                        season = year.toString(),
+                                        round = "22",
+                                        driverStandings = listOf(
+                                            DriverStandingDto(
+                                                position = "1",
+                                                points = "454",
+                                                wins = "19",
+                                                driver = ErgastDriverDto(
+                                                    driverId = "max_verstappen",
+                                                    permanentNumber = "33",
+                                                    code = "VER",
+                                                    url = "http://en.wikipedia.org/wiki/Max_Verstappen",
+                                                    givenName = "Max",
+                                                    familyName = "Verstappen",
+                                                    dateOfBirth = "1997-09-30",
+                                                    nationality = "Dutch"
+                                                ),
+                                                constructors = listOf(
+                                                    ErgastConstructorDto(
+                                                        constructorId = "red_bull",
+                                                        url = "http://en.wikipedia.org/wiki/Red_Bull_Racing",
+                                                        name = "Red Bull Racing",
+                                                        nationality = "Austrian"
+                                                    )
+                                                )
+                                            )
                                         )
                                     )
                                 )
                             )
                         )
                     )
-                )
-            )
-        )
+                    coEvery { ergastApiClient.getDriverStandings(year) } returns ergastResponse
+                    coEvery { seasonRepository.save(any()) } returns SeasonEntity(
+                        year = year,
+                        championName = "Max Verstappen",
+                        championDriverId = "max_verstappen",
+                        championPoints = 454,
+                        championWins = 19
+                    )
+                } else {
+                    // Error case for other years
+                    coEvery { ergastApiClient.getDriverStandings(year) } throws ErgastApiServiceUnavailableException(
+                        "Error fetching driver standings data: Internal Server Error"
+                    )
+                }
+            }
+        }
 
         coEvery { seasonRepository.findAll() } returns existingSeasons
-        coEvery { webClient.get() } returns mockk(relaxed = true)
-        coEvery { webClient.get().uri("/2023/driverStandings/1.json") } returns mockk(relaxed = true)
-        coEvery { webClient.get().uri("/2023/driverStandings/1.json").retrieve() } returns mockk(relaxed = true)
-        coEvery { webClient.get().uri("/2023/driverStandings/1.json").retrieve().bodyToMono<ErgastDriverStandingsDto>() } returns Mono.just(
-            ergastResponse2023
-        )
-        coEvery { webClient.get().uri("/2024/driverStandings/1.json") } returns mockk(relaxed = true)
-        coEvery { webClient.get().uri("/2024/driverStandings/1.json").retrieve() } returns mockk(relaxed = true)
-        coEvery { webClient.get().uri("/2024/driverStandings/1.json").retrieve().bodyToMono<ErgastDriverStandingsDto>() } throws WebClientResponseException(
-            500,
-            "Internal Server Error",
-            null,
-            null,
-            null
-        )
-        coEvery { seasonRepository.save(any()) } returns SeasonEntity(
-            year = 2023,
-            championName = "Max Verstappen",
-            championDriverId = "max_verstappen",
-            championPoints = 454,
-            championWins = 19
-        )
 
         // When
         val result = f1DataService.ensureSeasonsDataPopulated()
 
         // Then
-        assertTrue(result) // Should return true as we attempted to fetch data
+        assertTrue(result) // Should return true because 2023 was successfully fetched and saved
         coVerify(exactly = 1) { seasonRepository.save(any()) } // Only 2023 should be saved
+        (2005..currentYear).forEach { year ->
+            if (year != 2022) {
+                coVerify { ergastApiClient.getDriverStandings(year) } // Verify all years were attempted
+            }
+        }
     }
 
     @Test
     fun `ensureSeasonsDataPopulated should handle malformed champion data`() = runBlocking {
         // Given
+        val currentYear = Year.now().value
         val existingSeasons = listOf(
             SeasonEntity(
                 year = 2022,
@@ -643,41 +655,47 @@ class F1DataServiceImplTest {
                 championWins = 15
             )
         )
-        val ergastResponse = ErgastDriverStandingsDto(
-            mrData = MRDataStandingsDto(
-                xmlns = "http://ergast.com/mrd/1.5",
-                series = "f1",
-                url = "http://ergast.com/api/f1/2023/driverStandings/1.json",
-                limit = "30",
-                offset = "0",
-                total = "1",
-                standingsTable = StandingsTableDto(
-                    season = "2023",
-                    standingsLists = listOf(
-                        StandingsListDto(
-                            season = "2023",
-                            round = "22",
-                            driverStandings = listOf(
-                                DriverStandingDto(
-                                    position = "1",
-                                    points = "invalid", // Invalid points format
-                                    wins = "19",
-                                    driver = ErgastDriverDto(
-                                        driverId = "max_verstappen",
-                                        permanentNumber = "33",
-                                        code = "VER",
-                                        url = "http://en.wikipedia.org/wiki/Max_Verstappen",
-                                        givenName = "Max",
-                                        familyName = "Verstappen",
-                                        dateOfBirth = "1997-09-30",
-                                        nationality = "Dutch"
-                                    ),
-                                    constructors = listOf(
-                                        ErgastConstructorDto(
-                                            constructorId = "red_bull",
-                                            url = "http://en.wikipedia.org/wiki/Red_Bull_Racing",
-                                            name = "Red Bull Racing",
-                                            nationality = "Austrian"
+
+        // Mock responses for all years from 2005 to current year
+        (2005..currentYear).forEach { year ->
+            if (year != 2022) { // Skip 2022 as it's already in existingSeasons
+                val ergastResponse = ErgastDriverStandingsDto(
+                    mrData = MRDataStandingsDto(
+                        xmlns = "http://ergast.com/mrd/1.5",
+                        series = "f1",
+                        url = "http://ergast.com/api/f1/$year/driverStandings/1.json",
+                        limit = "30",
+                        offset = "0",
+                        total = "1",
+                        standingsTable = StandingsTableDto(
+                            season = year.toString(),
+                            standingsLists = listOf(
+                                StandingsListDto(
+                                    season = year.toString(),
+                                    round = "22",
+                                    driverStandings = listOf(
+                                        DriverStandingDto(
+                                            position = "1",
+                                            points = "invalid", // Invalid points format
+                                            wins = "19",
+                                            driver = ErgastDriverDto(
+                                                driverId = "max_verstappen",
+                                                permanentNumber = "33",
+                                                code = "VER",
+                                                url = "http://en.wikipedia.org/wiki/Max_Verstappen",
+                                                givenName = "Max",
+                                                familyName = "Verstappen",
+                                                dateOfBirth = "1997-09-30",
+                                                nationality = "Dutch"
+                                            ),
+                                            constructors = listOf(
+                                                ErgastConstructorDto(
+                                                    constructorId = "red_bull",
+                                                    url = "http://en.wikipedia.org/wiki/Red_Bull_Racing",
+                                                    name = "Red Bull Racing",
+                                                    nationality = "Austrian"
+                                                )
+                                            )
                                         )
                                     )
                                 )
@@ -685,20 +703,111 @@ class F1DataServiceImplTest {
                         )
                     )
                 )
-            )
-        )
+                coEvery { ergastApiClient.getDriverStandings(year) } returns ergastResponse
+            }
+        }
 
         coEvery { seasonRepository.findAll() } returns existingSeasons
-        coEvery { webClient.get() } returns mockk(relaxed = true)
-        coEvery { webClient.get().uri("/2023/driverStandings/1.json") } returns mockk(relaxed = true)
-        coEvery { webClient.get().uri("/2023/driverStandings/1.json").retrieve() } returns mockk(relaxed = true)
-        coEvery { webClient.get().uri("/2023/driverStandings/1.json").retrieve().bodyToMono<ErgastDriverStandingsDto>() } returns Mono.just(ergastResponse)
 
         // When
         val result = f1DataService.ensureSeasonsDataPopulated()
 
         // Then
-        assertTrue(result) // Should return true as we attempted to fetch data
+        assertFalse(result) // Should return false because no new data was fetched
         coVerify(exactly = 0) { seasonRepository.save(any()) } // Should not save due to invalid data
+        (2005..currentYear).forEach { year ->
+            if (year != 2022) {
+                coVerify { ergastApiClient.getDriverStandings(year) }
+            }
+        }
+    }
+
+    @Test
+    fun `ensureSeasonsDataPopulated should handle invalid numeric formats in response`() = runBlocking {
+        // Given
+        val currentYear = Year.now().value
+        val existingSeasons = listOf(
+            SeasonEntity(
+                year = 2022,
+                championName = "Max Verstappen",
+                championDriverId = "max_verstappen",
+                championPoints = 454,
+                championWins = 15
+            )
+        )
+
+        // Mock responses for all years from 2005 to current year
+        (2005..currentYear).forEach { year ->
+            if (year != 2022) { // Skip 2022 as it's already in existingSeasons
+                val ergastResponse = ErgastDriverStandingsDto(
+                    mrData = MRDataStandingsDto(
+                        xmlns = "http://ergast.com/mrd/1.5",
+                        series = "f1",
+                        url = "http://ergast.com/api/f1/$year/driverStandings/1.json",
+                        limit = "30",
+                        offset = "0",
+                        total = "1",
+                        standingsTable = StandingsTableDto(
+                            season = year.toString(),
+                            standingsLists = listOf(
+                                StandingsListDto(
+                                    season = year.toString(),
+                                    round = "22",
+                                    driverStandings = listOf(
+                                        DriverStandingDto(
+                                            position = "1",
+                                            points = if (year == 2023) "invalid_points" else "454", // Invalid points for 2023
+                                            wins = if (year == 2024) "invalid_wins" else "19", // Invalid wins for 2024
+                                            driver = ErgastDriverDto(
+                                                driverId = "max_verstappen",
+                                                permanentNumber = "33",
+                                                code = "VER",
+                                                url = "http://en.wikipedia.org/wiki/Max_Verstappen",
+                                                givenName = "Max",
+                                                familyName = "Verstappen",
+                                                dateOfBirth = "1997-09-30",
+                                                nationality = "Dutch"
+                                            ),
+                                            constructors = listOf(
+                                                ErgastConstructorDto(
+                                                    constructorId = "red_bull",
+                                                    url = "http://en.wikipedia.org/wiki/Red_Bull_Racing",
+                                                    name = "Red Bull Racing",
+                                                    nationality = "Austrian"
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+                coEvery { ergastApiClient.getDriverStandings(year) } returns ergastResponse
+                if (year != 2023 && year != 2024) { // Only save for years with valid data
+                    coEvery { seasonRepository.save(any()) } returns SeasonEntity(
+                        year = year,
+                        championName = "Max Verstappen",
+                        championDriverId = "max_verstappen",
+                        championPoints = 454,
+                        championWins = 19
+                    )
+                }
+            }
+        }
+
+        coEvery { seasonRepository.findAll() } returns existingSeasons
+
+        // When
+        val result = f1DataService.ensureSeasonsDataPopulated()
+
+        // Then
+        assertTrue(result) // Should return true because some years were successfully fetched and saved
+        coVerify(exactly = currentYear - 2005 - 2) { seasonRepository.save(any()) } // Should save all years except 2022, 2023, and 2024
+        (2005..currentYear).forEach { year ->
+            if (year != 2022) {
+                coVerify { ergastApiClient.getDriverStandings(year) } // Verify all years were attempted
+            }
+        }
     }
 }
