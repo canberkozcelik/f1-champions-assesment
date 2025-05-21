@@ -46,7 +46,7 @@ class F1DataServiceImpl(
                     .awaitSingleOrNull()
 
                 response?.let { ergastResponse ->
-                    val championData = ergastResponse.mrData.standingsTable?.standingsLists?.firstOrNull()
+                    val championData = ergastResponse.mrData.standingsTable.standingsLists.firstOrNull()
                     if (championData != null) {
                         val driverStanding = championData.driverStandings.first()
                         val seasonEntity = SeasonEntity(

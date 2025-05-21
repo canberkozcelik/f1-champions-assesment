@@ -30,7 +30,7 @@ class SeasonRepositoryTest {
         )
 
         // When
-        val savedSeason = seasonRepository.save(season)
+        seasonRepository.save(season)
         val retrievedSeason = seasonRepository.findById(2023).orElse(null)
 
         // Then
@@ -102,7 +102,7 @@ class SeasonRepositoryTest {
         )
 
         // When
-        val savedSeason = seasonRepository.save(season)
+        seasonRepository.save(season)
         val retrievedSeason = seasonRepository.findById(2005).orElse(null)
 
         // Then
@@ -123,7 +123,7 @@ class SeasonRepositoryTest {
         )
 
         // When
-        val savedSeason = seasonRepository.save(season)
+        seasonRepository.save(season)
         val retrievedSeason = seasonRepository.findById(currentYear).orElse(null)
 
         // Then

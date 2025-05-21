@@ -7,61 +7,39 @@ on:
     branches: [ main, develop ]
 
 jobs:
-  build:
+  build-and-test:
+    name: Build, Test, and Report
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0  # Fetch all history for better caching
-    
+
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: '17'
         cache: 'gradle'
-    
-    - name: Cache Gradle packages
-      uses: actions/cache@v4
-      with:
-        path: ~/.gradle/caches
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
-    
-    - name: Verify Gradle wrapper
-      run: |
-        if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
-          echo "gradle-wrapper.jar is missing"
-          exit 1
-        fi
-        if [ ! -f "gradlew" ]; then
-          echo "gradlew is missing"
-          exit 1
-        fi
-    
+
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
-    
-    - name: Verify Gradle wrapper execution
-      run: ./gradlew --version
-    
-    - name: Run ktlint
-      run: ./gradlew ktlintCheck
-      continue-on-error: false
-    
-    - name: Run tests
-      run: ./gradlew test
-      continue-on-error: false
-    
-    - name: Build with Gradle
+
+    - name: Run build (includes lint, test, JaCoCo report & verification)
       run: ./gradlew build
-      continue-on-error: false
-    
-    - name: Upload build artifacts
+
+    - name: Upload JaCoCo coverage report
+      uses: actions/upload-artifact@v4
+      with:
+          name: jacoco-test-coverage-report
+          path: build/reports/jacoco/test/html
+          if-no-files-found: error
+
+    - name: Upload JAR artifact
       uses: actions/upload-artifact@v4
       with:
         name: build-artifacts
         path: build/libs/*.jar
-        if-no-files-found: error 
+        if-no-files-found: error
