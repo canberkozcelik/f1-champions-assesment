@@ -1,8 +1,8 @@
 package com.f1champions.exception
 
+import io.mockk.junit5.MockKExtension
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.junit.jupiter.MockitoExtension
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -14,7 +14,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-@ExtendWith(MockitoExtension::class)
+@ExtendWith(MockKExtension::class)
 class GlobalExceptionHandlerTest {
 
     private val exceptionHandler = GlobalExceptionHandler()
