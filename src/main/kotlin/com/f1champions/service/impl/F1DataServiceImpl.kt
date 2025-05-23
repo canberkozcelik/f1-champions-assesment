@@ -2,19 +2,17 @@ package com.f1champions.service.impl
 
 import com.f1champions.api.dto.RaceDto
 import com.f1champions.api.dto.SeasonDto
-import com.f1champions.client.ergast.dto.results.ErgastRaceResultsDto
-import com.f1champions.client.ergast.dto.standings.ErgastDriverStandingsDto
 import com.f1champions.entity.RaceEntity
 import com.f1champions.entity.SeasonEntity
+import com.f1champions.exception.ErgastApiException
+import com.f1champions.exception.ErgastApiInvalidResponseException
 import com.f1champions.repository.RaceRepository
 import com.f1champions.repository.SeasonRepository
+import com.f1champions.service.ErgastApiClient
 import com.f1champions.service.F1DataService
-import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.bodyToMono
 import java.time.LocalDate
 import java.time.Year
 import java.time.format.DateTimeFormatter
@@ -23,7 +21,7 @@ import java.time.format.DateTimeFormatter
 class F1DataServiceImpl(
     private val seasonRepository: SeasonRepository,
     private val raceRepository: RaceRepository,
-    private val webClient: WebClient
+    private val ergastApiClient: ErgastApiClient
 ) : F1DataService {
 
     private val logger: Logger = LoggerFactory.getLogger(this::class.java)
@@ -34,39 +32,50 @@ class F1DataServiceImpl(
         val yearsToFetch = (2005..currentYear).filter { it !in existingSeasons }
 
         if (yearsToFetch.isEmpty()) {
-            return false
+            logger.info("All seasons from 2005 to $currentYear are already populated")
+            // Return true because data is already populated
+            return true
         }
 
+        var dataFetched = false
         yearsToFetch.forEach { year ->
             try {
-                val response = webClient.get()
-                    .uri("/$year/driverStandings/1.json")
-                    .retrieve()
-                    .bodyToMono<ErgastDriverStandingsDto>()
-                    .awaitSingleOrNull()
-
-                response?.let { ergastResponse ->
-                    val championData = ergastResponse.mrData.standingsTable.standingsLists.firstOrNull()
-                    if (championData != null) {
-                        val driverStanding = championData.driverStandings.first()
-                        val seasonEntity = SeasonEntity(
-                            year = year,
-                            championName = "${driverStanding.driver.givenName} ${driverStanding.driver.familyName}",
-                            championDriverId = driverStanding.driver.driverId,
-                            championPoints = driverStanding.points.toDouble().toInt(),
-                            championWins = driverStanding.wins.toInt()
+                val standings = ergastApiClient.getDriverStandings(year)
+                val championData = standings.mrData.standingsTable.standingsLists.first()
+                val driverStanding = championData.driverStandings.first()
+                try {
+                    val points = driverStanding.points.toDoubleOrNull()
+                    val wins = driverStanding.wins.toIntOrNull()
+                    if (points == null || wins == null) {
+                        throw ErgastApiInvalidResponseException(
+                            "Invalid points or wins format in response for year $year. " +
+                                "Points: '${driverStanding.points}', Wins: '${driverStanding.wins}'"
                         )
-                        seasonRepository.save(seasonEntity)
-                        logger.info("Saved season data for year $year")
                     }
+                    val seasonEntity = SeasonEntity(
+                        year = year,
+                        championName = "${driverStanding.driver.givenName} ${driverStanding.driver.familyName}",
+                        championDriverId = driverStanding.driver.driverId,
+                        championPoints = points.toInt(),
+                        championWins = wins
+                    )
+                    seasonRepository.save(seasonEntity)
+                    logger.info("Saved season data for year $year")
+                    dataFetched = true
+                } catch (e: NumberFormatException) {
+                    throw ErgastApiInvalidResponseException(
+                        "Invalid points or wins format in response for year $year. " +
+                            "Points: '${driverStanding.points}', Wins: '${driverStanding.wins}'",
+                        e
+                    )
                 }
-            } catch (e: Exception) {
+            } catch (e: ErgastApiException) {
                 // Log error but continue with other years
                 logger.error("Error fetching season data for year $year: ${e.message}")
             }
         }
 
-        return true
+        return dataFetched
     }
 
     override suspend fun getAllSeasons(): List<SeasonDto> {
@@ -95,40 +104,35 @@ class F1DataServiceImpl(
 
         // Fetch race data from Ergast API
         try {
-            val response = webClient.get()
-                .uri("/$year/results/1.json")
-                .retrieve()
-                .bodyToMono<ErgastRaceResultsDto>()
-                .awaitSingleOrNull()
-
-            if (response == null) {
-                throw IllegalStateException("Failed to fetch race data from Ergast API for year $year")
-            }
-
+            val response = ergastApiClient.getRaceResults(year)
             val races = response.mrData.raceTable.races.map { raceDto ->
-                val winningResult = raceDto.results.first()
-                val winningDriver = winningResult.driver
-                val winningConstructor = winningResult.constructor
+                try {
+                    val winningResult = raceDto.results.first()
+                    val winningDriver = winningResult.driver
+                    val winningConstructor = winningResult.constructor
 
-                RaceEntity(
-                    season = season,
-                    round = raceDto.round.toInt(),
-                    raceName = raceDto.raceName,
-                    date = LocalDate.parse(raceDto.date, DateTimeFormatter.ISO_DATE),
-                    circuitName = raceDto.circuit.circuitName,
-                    winningDriverId = winningDriver.driverId,
-                    winningDriverName = "${winningDriver.givenName} ${winningDriver.familyName}",
-                    winningDriverNationality = winningDriver.nationality,
-                    winningConstructorId = winningConstructor.constructorId,
-                    winningConstructorName = winningConstructor.name,
-                    isSeasonChampionWinner = winningDriver.driverId == season.championDriverId
-                )
+                    RaceEntity(
+                        season = season,
+                        round = raceDto.round.toInt(),
+                        raceName = raceDto.raceName,
+                        date = LocalDate.parse(raceDto.date, DateTimeFormatter.ISO_DATE),
+                        circuitName = raceDto.circuit.circuitName,
+                        winningDriverId = winningDriver.driverId,
+                        winningDriverName = "${winningDriver.givenName} ${winningDriver.familyName}",
+                        winningDriverNationality = winningDriver.nationality,
+                        winningConstructorId = winningConstructor.constructorId,
+                        winningConstructorName = winningConstructor.name,
+                        isSeasonChampionWinner = winningDriver.driverId == season.championDriverId
+                    )
+                } catch (e: Exception) {
+                    throw IllegalStateException("Failed to process race data for year $year: ${e.message}", e)
+                }
             }
 
             // Save all races in a single transaction
             val savedRaces = raceRepository.saveAll(races)
             return savedRaces.map { it.toDto() }
-        } catch (e: Exception) {
+        } catch (e: ErgastApiException) {
             throw IllegalStateException("Failed to process race data for year $year: ${e.message}", e)
         }
     }
