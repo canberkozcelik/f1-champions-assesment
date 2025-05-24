@@ -3,12 +3,17 @@ package com.f1champions.exception
 import io.mockk.junit5.MockKExtension
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.postgresql.util.PSQLException
+import org.postgresql.util.PSQLState
+import org.springframework.dao.DataAccessResourceFailureException
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.web.context.request.ServletWebRequest
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import java.net.UnknownHostException
+import java.sql.SQLException
 import java.time.LocalDateTime
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -202,6 +207,7 @@ class GlobalExceptionHandlerTest {
     fun `handleErgastApiException returns 500 Internal Server Error for unknown ErgastApiException`() {
         // Given
         class MyCustomErgastError(message: String) : ErgastApiException(message)
+
         val exception = MyCustomErgastError("Some F1 API error")
         val request = createMockRequest("/api/seasons/2023/races")
 
@@ -230,6 +236,123 @@ class GlobalExceptionHandlerTest {
         // Then
         assertNotNull(response.body?.timestamp)
         assertTrue(response.body?.timestamp is LocalDateTime)
+    }
+
+    @Test
+    fun `handlePSQLException returns 503 Service Unavailable for connection refused`() {
+        // Given
+        val exception = PSQLException(
+            "Connection to localhost:5432 refused. Check that the hostname and port are correct and that the postmaster is accepting TCP/IP connections.",
+            PSQLState.CONNECTION_REJECTED
+        )
+        val request = createMockRequest("/api/seasons/2023/races")
+
+        // When
+        val response = exceptionHandler.handlePSQLException(exception, request)
+
+        // Then
+        assertErrorResponse(
+            response = response,
+            expectedStatus = HttpStatus.SERVICE_UNAVAILABLE,
+            expectedError = "Service Unavailable",
+            expectedMessage = "Database service is currently unavailable. Please try again later.",
+            expectedPath = "/api/seasons/2023/races"
+        )
+    }
+
+    @Test
+    fun `handlePSQLException returns 500 Internal Server Error for other database errors`() {
+        // Given
+        val exception = PSQLException("Some other database error", PSQLState.UNEXPECTED_ERROR)
+        val request = createMockRequest("/api/seasons/2023/races")
+
+        // When
+        val response = exceptionHandler.handlePSQLException(exception, request)
+
+        // Then
+        assertErrorResponse(
+            response = response,
+            expectedStatus = HttpStatus.INTERNAL_SERVER_ERROR,
+            expectedError = "Internal Server Error",
+            expectedMessage = "A database error occurred while processing your request",
+            expectedPath = "/api/seasons/2023/races"
+        )
+    }
+
+    @Test
+    fun `handleUnknownHostException returns 503 Service Unavailable`() {
+        // Given
+        val exception = UnknownHostException("postgres")
+        val request = createMockRequest("/api/seasons/2023/races")
+
+        // When
+        val response = exceptionHandler.handleUnknownHostException(exception, request)
+
+        // Then
+        assertErrorResponse(
+            response = response,
+            expectedStatus = HttpStatus.SERVICE_UNAVAILABLE,
+            expectedError = "Service Unavailable",
+            expectedMessage = "Database service is currently unavailable. Please try again later.",
+            expectedPath = "/api/seasons/2023/races"
+        )
+    }
+
+    @Test
+    fun `handleDataAccessResourceFailureException returns 503 Service Unavailable`() {
+        // Given
+        val exception = DataAccessResourceFailureException("Failed to obtain JDBC Connection")
+        val request = createMockRequest("/api/seasons/2023/races")
+
+        // When
+        val response = exceptionHandler.handleDataAccessResourceFailureException(exception, request)
+
+        // Then
+        assertErrorResponse(
+            response = response,
+            expectedStatus = HttpStatus.SERVICE_UNAVAILABLE,
+            expectedError = "Service Unavailable",
+            expectedMessage = "Database service is currently unavailable. Please try again later.",
+            expectedPath = "/api/seasons/2023/races"
+        )
+    }
+
+    @Test
+    fun `handleSQLException returns 503 Service Unavailable for connection issues`() {
+        // Given
+        val exception = SQLException("Connection to postgres:5432 refused")
+        val request = createMockRequest("/api/seasons/2023/races")
+
+        // When
+        val response = exceptionHandler.handleSQLException(exception, request)
+
+        // Then
+        assertErrorResponse(
+            response = response,
+            expectedStatus = HttpStatus.SERVICE_UNAVAILABLE,
+            expectedError = "Service Unavailable",
+            expectedMessage = "Database service is currently unavailable. Please try again later.",
+            expectedPath = "/api/seasons/2023/races"
+        )
+    }
+
+    @Test
+    fun `handleSQLException returns 500 Internal Server Error for other SQL issues`() {
+        // Given
+        val exception = SQLException("Syntax error in SQL statement")
+        val request = createMockRequest("/api/seasons/2023/races")
+
+        // When
+        val response = exceptionHandler.handleSQLException(exception, request)
+
+        // Then
+        assertErrorResponse(
+            response = response,
+            expectedStatus = HttpStatus.INTERNAL_SERVER_ERROR,
+            expectedError = "Internal Server Error",
+            expectedMessage = "A database error occurred while processing your request",
+            expectedPath = "/api/seasons/2023/races"
+        )
     }
 
     private fun createMockRequest(path: String): ServletWebRequest {

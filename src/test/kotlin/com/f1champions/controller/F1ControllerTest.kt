@@ -277,3 +277,4 @@ class F1ControllerTest {
             .andExpect(jsonPath("$.message").value("Received invalid data from Formula 1 data service"))
     }
 }
+ 
