@@ -1,5 +1,6 @@
 package com.f1champions.config
 
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.reactive.function.client.WebClient
@@ -8,9 +9,9 @@ import org.springframework.web.reactive.function.client.WebClient
 class WebClientConfig {
 
     @Bean
-    fun ergastWebClient(): WebClient {
+    fun ergastWebClient(@Value("\${ergast.api.base-url}") baseUrl: String): WebClient {
         return WebClient.builder()
-            .baseUrl("http://ergast.com/api/f1")
+            .baseUrl(baseUrl)
             .build()
     }
 }

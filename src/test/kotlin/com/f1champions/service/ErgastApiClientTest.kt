@@ -41,13 +41,20 @@ class ErgastApiClientTest {
     private lateinit var webClientRequestHeadersSpec: WebClient.RequestHeadersSpec<*>
     private lateinit var webClientResponseSpec: WebClient.ResponseSpec
 
+    private val driverStandingsEndpoint = "/{year}/driverStandings/1.json"
+    private val raceResultsEndpoint = "/{year}/results/1.json"
+
     @BeforeEach
     fun setup() {
         webClient = mockk()
         webClientRequest = mockk()
         webClientRequestHeadersSpec = mockk()
         webClientResponseSpec = mockk()
-        ergastApiClient = ErgastApiClientImpl(webClient)
+        ergastApiClient = ErgastApiClientImpl(
+            webClient,
+            driverStandingsEndpoint,
+            raceResultsEndpoint
+        )
 
         // Setup common WebClient mock chain
         coEvery { webClient.get() } returns webClientRequest
@@ -60,11 +67,15 @@ class ErgastApiClientTest {
         @Test
         fun `getDriverStandings returns valid data when API call succeeds`() = runBlocking {
             // Given
+            val year = 2023
+            val expectedEndpoint = "/2023/driverStandings/1.json"
             val expectedResponse = createValidDriverStandingsResponse()
+
+            coEvery { webClientRequest.uri(expectedEndpoint) } returns webClientRequestHeadersSpec
             coEvery { webClientResponseSpec.bodyToMono<ErgastDriverStandingsDto>() } returns Mono.just(expectedResponse)
 
             // When
-            val result = ergastApiClient.getDriverStandings(2023)
+            val result = ergastApiClient.getDriverStandings(year)
 
             // Then
             assertNotNull(result)
@@ -118,11 +129,15 @@ class ErgastApiClientTest {
         @Test
         fun `getRaceResults returns valid data when API call succeeds`() = runBlocking {
             // Given
+            val year = 2023
+            val expectedEndpoint = "/2023/results/1.json"
             val expectedResponse = createValidRaceResultsResponse()
+
+            coEvery { webClientRequest.uri(expectedEndpoint) } returns webClientRequestHeadersSpec
             coEvery { webClientResponseSpec.bodyToMono<ErgastRaceResultsDto>() } returns Mono.just(expectedResponse)
 
             // When
-            val result = ergastApiClient.getRaceResults(2023)
+            val result = ergastApiClient.getRaceResults(year)
 
             // Then
             assertNotNull(result)
