@@ -33,6 +33,7 @@ dependencies {
     // Database
     runtimeOnly("org.postgresql:postgresql")
     runtimeOnly("com.h2database:h2")
+    implementation("org.postgresql:postgresql:42.6.1")
 
     // Kotlin
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
@@ -50,6 +51,7 @@ dependencies {
     testImplementation("com.ninja-squad:springmockk:4.0.2")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+    testImplementation("org.postgresql:postgresql:42.6.1")
 }
 
 tasks.withType<KotlinCompile> {
