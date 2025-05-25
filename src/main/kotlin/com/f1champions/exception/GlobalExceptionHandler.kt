@@ -1,6 +1,9 @@
 package com.f1champions.exception
 
+import org.postgresql.util.PSQLException
+import org.postgresql.util.PSQLState
 import org.slf4j.LoggerFactory
+import org.springframework.dao.DataAccessResourceFailureException
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -9,6 +12,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.context.request.WebRequest
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
+import java.net.UnknownHostException
+import java.sql.SQLException
 import java.time.LocalDateTime
 
 @RestControllerAdvice
@@ -159,6 +164,90 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
             "An error occurred while fetching Formula 1 data",
             request
         )
+    }
+
+    @ExceptionHandler(PSQLException::class)
+    fun handlePSQLException(
+        ex: PSQLException,
+        request: WebRequest
+    ): ResponseEntity<ErrorResponse> {
+        logger.error("Database error: ${ex.message}", ex)
+        return when (ex.sqlState) {
+            PSQLState.CONNECTION_REJECTED.state -> {
+                createErrorResponse(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    "Service Unavailable",
+                    "Database service is currently unavailable. Please try again later.",
+                    request
+                )
+            }
+
+            else -> {
+                createErrorResponse(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Internal Server Error",
+                    "A database error occurred while processing your request",
+                    request
+                )
+            }
+        }
+    }
+
+    @ExceptionHandler(UnknownHostException::class)
+    fun handleUnknownHostException(
+        ex: UnknownHostException,
+        request: WebRequest
+    ): ResponseEntity<ErrorResponse> {
+        logger.error("Database host unreachable: ${ex.message}", ex)
+        return createErrorResponse(
+            HttpStatus.SERVICE_UNAVAILABLE,
+            "Service Unavailable",
+            "Database service is currently unavailable. Please try again later.",
+            request
+        )
+    }
+
+    @ExceptionHandler(DataAccessResourceFailureException::class)
+    fun handleDataAccessResourceFailureException(
+        ex: DataAccessResourceFailureException,
+        request: WebRequest
+    ): ResponseEntity<ErrorResponse> {
+        logger.error("Database resource failure: ${ex.message}", ex)
+        return createErrorResponse(
+            HttpStatus.SERVICE_UNAVAILABLE,
+            "Service Unavailable",
+            "Database service is currently unavailable. Please try again later.",
+            request
+        )
+    }
+
+    @ExceptionHandler(SQLException::class)
+    fun handleSQLException(
+        ex: SQLException,
+        request: WebRequest
+    ): ResponseEntity<ErrorResponse> {
+        logger.error("SQL error: ${ex.message}", ex)
+        return when {
+            ex.message?.contains("Connection refused") == true ||
+                ex.message?.contains("Connection to") == true ||
+                ex.message?.contains("postgres") == true -> {
+                createErrorResponse(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    "Service Unavailable",
+                    "Database service is currently unavailable. Please try again later.",
+                    request
+                )
+            }
+
+            else -> {
+                createErrorResponse(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Internal Server Error",
+                    "A database error occurred while processing your request",
+                    request
+                )
+            }
+        }
     }
 
     private fun createErrorResponse(
