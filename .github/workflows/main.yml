@@ -120,7 +120,6 @@ jobs:
         fi
 
     - name: Log in to GHCR
-      if: github.event_name == 'push'
       uses: docker/login-action@v3
       with:
         registry: ${{ env.REGISTRY }}
@@ -131,7 +130,8 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: .
-        push: ${{ github.event_name == 'push' }}
+        # Always push to registry for initial testing
+        push: true
         tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
         platforms: linux/amd64
         cache-from: |
