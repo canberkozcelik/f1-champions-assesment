@@ -1,10 +1,16 @@
-name: CI
+name: CI/CD
 
 on:
   push:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  DOCKER_BUILD_MEMORY: 1G
+  DOCKER_BUILD_CPU: 1.0
 
 jobs:
   build-and-test:
@@ -14,8 +20,6 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # Fetch all history for better caching
 
     - name: Set up JDK 17
       uses: actions/setup-java@v4
@@ -24,22 +28,123 @@ jobs:
         java-version: '17'
         cache: 'gradle'
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+    # Create secrets directory and database password for testing
+    - name: Setup database credentials
+      run: |
+        # Create secrets directory with proper permissions
+        mkdir -p secrets
+        chmod 700 secrets
 
-    - name: Run build (includes lint, test, JaCoCo report & verification)
+        # Generate and store database password
+        echo "${{ secrets.DB_PASSWORD }}" > secrets/db_password.txt
+        
+        # Verify file creation and permissions
+        if [ ! -f secrets/db_password.txt ]; then
+          echo "Error: Failed to create password file"
+          exit 1
+        fi
+        
+        # Set restrictive permissions
+        chmod 600 secrets/db_password.txt
+        
+        # Verify file content
+        if [ ! -s secrets/db_password.txt ]; then
+          echo "Error: Password file is empty"
+          exit 1
+        fi
+
+    - name: Run build and tests
       run: ./gradlew build
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: build/reports/tests/
 
     - name: Upload JaCoCo coverage report
       uses: actions/upload-artifact@v4
       with:
-          name: jacoco-test-coverage-report
-          path: build/reports/jacoco/test/html
-          if-no-files-found: error
-
-    - name: Upload JAR artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: build-artifacts
-        path: build/libs/*.jar
+        name: coverage-report
+        path: build/reports/jacoco/test/html/
         if-no-files-found: error
+
+    # Clean up secrets
+    - name: Clean up secrets
+      if: always()  # Run even if previous steps fail
+      run: |
+        if [ -d "secrets" ]; then
+          rm -rf secrets/
+        fi
+
+  docker:
+    name: Build and Push Docker Image
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    if: github.event_name != 'pull_request'  # Only run on push to main/develop
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # Create secrets for Docker build
+    - name: Setup database credentials
+      run: |
+        # Create secrets directory with proper permissions
+        mkdir -p secrets
+        chmod 700 secrets
+
+        # Generate and store database password
+        echo "${{ secrets.DB_PASSWORD }}" > secrets/db_password.txt
+        
+        # Verify file creation and permissions
+        if [ ! -f secrets/db_password.txt ]; then
+          echo "Error: Failed to create password file"
+          exit 1
+        fi
+        
+        # Set restrictive permissions
+        chmod 600 secrets/db_password.txt
+        
+        # Verify file content
+        if [ ! -s secrets/db_password.txt ]; then
+          echo "Error: Password file is empty"
+          exit 1
+        fi
+
+    - name: Log in to GHCR
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build and push
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        build-args: |
+          DOCKER_BUILDKIT=1
+        labels: |
+          com.f1champions.description=F1 Champions API
+          com.f1champions.department=Engineering
+          com.f1champions.service=backend
+        platforms: linux/amd64
+        memory: ${{ env.DOCKER_BUILD_MEMORY }}
+        cpu: ${{ env.DOCKER_BUILD_CPU }}
+
+    # Clean up secrets
+    - name: Clean up secrets
+      if: always()  # Run even if previous steps fail
+      run: |
+        if [ -d "secrets" ]; then
+          rm -rf secrets/
+        fi
+ 
