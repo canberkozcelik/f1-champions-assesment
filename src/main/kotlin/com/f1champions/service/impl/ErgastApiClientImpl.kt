@@ -9,6 +9,7 @@ import com.f1champions.exception.ErgastApiRateLimitException
 import com.f1champions.exception.ErgastApiServiceUnavailableException
 import com.f1champions.service.ErgastApiClient
 import kotlinx.coroutines.reactor.awaitSingleOrNull
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
@@ -27,13 +28,17 @@ import java.time.Duration
  */
 @Service
 class ErgastApiClientImpl(
-    private val webClient: WebClient
+    private val webClient: WebClient,
+    @Value("\${ergast.api.endpoints.driver-standings}") private val driverStandingsEndpoint: String,
+    @Value("\${ergast.api.endpoints.race-results}") private val raceResultsEndpoint: String
 ) : ErgastApiClient {
 
     override suspend fun getDriverStandings(year: Int): ErgastDriverStandingsDto {
         return try {
+            val endpoint = driverStandingsEndpoint.replace("{year}", year.toString())
+
             val response = webClient.get()
-                .uri("/$year/driverStandings/1.json")
+                .uri(endpoint)
                 .retrieve()
                 .bodyToMono<ErgastDriverStandingsDto>()
                 .timeout(Duration.ofSeconds(10))
@@ -85,8 +90,10 @@ class ErgastApiClientImpl(
 
     override suspend fun getRaceResults(year: Int): ErgastRaceResultsDto {
         return try {
+            val endpoint = raceResultsEndpoint.replace("{year}", year.toString())
+
             val response = webClient.get()
-                .uri("/$year/results/1.json")
+                .uri(endpoint)
                 .retrieve()
                 .bodyToMono<ErgastRaceResultsDto>()
                 .timeout(Duration.ofSeconds(10))

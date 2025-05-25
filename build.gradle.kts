@@ -126,3 +126,10 @@ tasks.test {
 jacoco {
     toolVersion = "0.8.11"
 }
+
+// Configure ktlint
+ktlint {
+    filter {
+        exclude("**/package-info.kt")
+    }
+}

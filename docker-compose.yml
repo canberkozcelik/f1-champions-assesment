@@ -1,22 +1,140 @@
 version: '3.8'
 
+x-defaults: &default-config
+  deploy:
+    resources:
+      limits:
+        cpus: '1'
+        memory: 1G
+      reservations:
+        cpus: '0.5'
+        memory: 512M
+  logging:
+    driver: "json-file"
+    options:
+      max-size: "10m"
+      max-file: "3"
+      compress: "true"
+
 services:
+  backend:
+    image: ${DOCKER_IMAGE:-ghcr.io/${GITHUB_REPOSITORY:-cozcelik/f1-champions-assesment}:latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: f1_backend
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-f1db}
+      - DB_USERNAME=${DB_USERNAME:-f1user}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-dev}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=create
+      - SPRING_JPA_SHOW_SQL=${SPRING_JPA_SHOW_SQL:-false}
+      # Add debug logging
+      - SPRING_LOG_LEVEL_ORG_POSTGRESQL=DEBUG
+      - SPRING_LOG_LEVEL_COM_ZAXXER_HIKARI=DEBUG
+    command: java -jar /app/app.jar
+    secrets:
+      - source: db_password
+        target: /run/secrets/db_password
+        mode: 0400
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - f1-network
+    restart: no
+    <<: *default-config
+    security_opt:
+      - no-new-privileges:true
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    labels:
+      - "com.example.description=F1 Champions API"
+      - "com.example.department=Engineering"
+      - "com.example.service=backend"
+
   postgres:
     image: postgres:15-alpine
-    container_name: f1-postgres
-    environment:
-      POSTGRES_DB: f1db
-      POSTGRES_USER: f1user
-      POSTGRES_PASSWORD: f1password
+    container_name: f1_postgres_db
     ports:
       - "5432:5432"
+    environment:
+      POSTGRES_DB: ${DB_NAME:-f1db}
+      POSTGRES_USER: ${DB_USERNAME:-f1user}
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+      POSTGRES_HOST_AUTH_METHOD: "scram-sha-256"
+      PGDATA: /var/lib/postgresql/data/pgdata
+    command: postgres
+    secrets:
+      - source: db_password
+        target: /run/secrets/db_password
+        mode: 0400
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - type: volume
+        source: postgres_data
+        target: /var/lib/postgresql/data
+        volume:
+          nocopy: true
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U f1user -d f1db"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-f1user} -d ${DB_NAME:-f1db}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - f1-network
+    restart: unless-stopped
+    <<: *default-config
+    security_opt:
+      - no-new-privileges:true
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    labels:
+      - "com.example.description=F1 Champions Database"
+      - "com.example.department=Engineering"
+      - "com.example.service=database"
+
+networks:
+  f1-network:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: f1_network
+      com.docker.network.bridge.enable_icc: "true"
+      com.docker.network.bridge.enable_ip_masquerade: "true"
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16
+          gateway: 172.28.0.1
+    labels:
+      - "com.f1champions.description=F1 Champions Network"
+      - "com.f1champions.department=Engineering"
 
 volumes:
-  postgres_data: 
+  postgres_data:
+    name: f1_postgres_data
+    driver: local
+    labels:
+      - "com.f1champions.description=F1 Champions Database Volume"
+      - "com.f1champions.department=Engineering"
+
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt
+    labels:
+      - "com.f1champions.description=Database Password"
+      - "com.f1champions.department=Engineering"

@@ -81,4 +81,13 @@ yarn-error.log*
 ### Environment ###
 .env
 .env.local
-.env.*.local 
+.env.*.local
+
+### Secrets ###
+secrets/
+**/secrets/
+db_password.txt
+**/db_password.txt
+*.pem
+*.key
+*.crt 
