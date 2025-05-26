@@ -34,19 +34,20 @@ jobs:
         cache: 'gradle'
 
     - name: Run build and tests
+      working-directory: ./backend
       run: ./gradlew build
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
       with:
         name: test-results
-        path: build/reports/tests/
+        path: backend/build/reports/tests/
 
     - name: Upload JaCoCo coverage report
       uses: actions/upload-artifact@v4
       with:
         name: coverage-report
-        path: build/reports/jacoco/test/html/
+        path: backend/build/reports/jacoco/test/html/
         if-no-files-found: error
 
   deploy-docker:
@@ -70,12 +71,12 @@ jobs:
 
     - name: Setup database credentials
       run: |
-        mkdir -p secrets
-        chmod 700 secrets
-        echo "${{ secrets.DB_PASSWORD }}" > secrets/db_password.txt
-        chmod 600 secrets/db_password.txt
+        mkdir -p infrastructure/secrets
+        chmod 700 infrastructure/secrets
+        echo "${{ secrets.DB_PASSWORD }}" > infrastructure/secrets/db_password.txt
+        chmod 600 infrastructure/secrets/db_password.txt
         
-        if [ ! -f secrets/db_password.txt ] || [ ! -s secrets/db_password.txt ]; then
+        if [ ! -f infrastructure/secrets/db_password.txt ] || [ ! -s infrastructure/secrets/db_password.txt ]; then
           echo "Error: Failed to create or password file is empty"
           exit 1
         fi
@@ -91,6 +92,7 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: .
+        file: ./infrastructure/Dockerfile
         push: true
         tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
         platforms: linux/amd64
@@ -113,7 +115,7 @@ jobs:
     - name: Clean up secrets
       if: always()
       run: |
-        if [ -d "secrets" ]; then
-          rm -rf secrets/
+        if [ -d "infrastructure/secrets" ]; then
+          rm -rf infrastructure/secrets/
         fi
  

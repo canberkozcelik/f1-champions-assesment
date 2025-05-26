@@ -15,20 +15,20 @@ USER builduser
 ENV GRADLE_USER_HOME=/home/builduser/.gradle
 
 # Copy only necessary files first to leverage cache
-COPY --chown=builduser:builduser build.gradle.kts settings.gradle.kts gradlew .editorconfig ./
-COPY --chown=builduser:builduser gradle ./gradle
+COPY --chown=builduser:builduser backend/build.gradle.kts backend/settings.gradle.kts backend/gradlew backend/.editorconfig ./
+COPY --chown=builduser:builduser backend/gradle ./gradle
 
 # Download dependencies
 RUN ./gradlew dependencies --no-daemon
 
 # Copy source code
-COPY --chown=builduser:builduser src ./src
+COPY --chown=builduser:builduser backend/src ./src
 
 # Build the application
 RUN ./gradlew build --no-daemon
 
-# Copy the entrypoint script (adjust the source path if needed) and make it executable.
-COPY --chown=builduser:builduser src/main/docker/entrypoint.sh /app/entrypoint.sh
+# Copy the entrypoint script and make it executable
+COPY --chown=builduser:builduser backend/src/main/docker/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
 # Run stage
@@ -39,6 +39,7 @@ RUN groupadd -r appuser && \
     useradd -r -g appuser -m -d /home/appuser appuser
 
 WORKDIR /app
+
 COPY --from=build /app/build/libs/*.jar app.jar
 COPY --from=build /app/entrypoint.sh /app/entrypoint.sh
 

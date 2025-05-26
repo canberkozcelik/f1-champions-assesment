@@ -1,5 +1,3 @@
-version: '3.8'
-
 x-defaults: &default-config
   deploy:
     resources:
@@ -18,10 +16,14 @@ x-defaults: &default-config
 
 services:
   backend:
-    image: ${DOCKER_IMAGE:-ghcr.io/${GITHUB_REPOSITORY:-cozcelik/f1-champions-assesment}:latest}
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..  # Go up one level to access backend directory
+      dockerfile: infrastructure/Dockerfile
+      args:
+        - DOCKER_BUILDKIT=1
+        - ERGAST_API_BASE_URL=https://api.jolpi.ca/ergast/f1
+        - ERGAST_API_ENDPOINTS_DRIVER_STANDINGS=/{year}/driverStandings/1.json
+        - ERGAST_API_ENDPOINTS_RACE_RESULTS=/{year}/results/1.json
     container_name: f1_backend
     ports:
       - "8080:8080"
