@@ -11,6 +11,9 @@ env:
   IMAGE_NAME: ${{ github.repository }}
   DOCKER_BUILD_MEMORY: 1G
   DOCKER_BUILD_CPU: 1.0
+  ERGAST_API_BASE_URL: https://api.jolpi.ca/ergast/f1
+  ERGAST_API_ENDPOINTS_DRIVER_STANDINGS: /{year}/driverStandings/1.json
+  ERGAST_API_ENDPOINTS_RACE_RESULTS: /{year}/results/1.json
 
 jobs:
   build-and-test:
@@ -130,16 +133,18 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: .
-        # Always push to registry for initial testing
         push: true
         tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
         platforms: linux/amd64
+        build-args: |
+          DOCKER_BUILDKIT=1
+          ERGAST_API_BASE_URL=${{ env.ERGAST_API_BASE_URL }}
+          ERGAST_API_ENDPOINTS_DRIVER_STANDINGS=${{ env.ERGAST_API_ENDPOINTS_DRIVER_STANDINGS }}
+          ERGAST_API_ENDPOINTS_RACE_RESULTS=${{ env.ERGAST_API_ENDPOINTS_RACE_RESULTS }}
         cache-from: |
           type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
         cache-to: |
           type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
-        build-args: |
-          DOCKER_BUILDKIT=1
         labels: |
           com.f1champions.description=F1 Champions API
           com.f1champions.department=Engineering

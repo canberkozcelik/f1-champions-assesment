@@ -31,6 +31,9 @@ services:
       - DB_NAME=${DB_NAME:-f1db}
       - DB_USERNAME=${DB_USERNAME:-f1user}
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-dev}
+      - ERGAST_API_BASE_URL=https://api.jolpi.ca/ergast/f1
+      - ERGAST_API_ENDPOINTS_DRIVER_STANDINGS=/{year}/driverStandings/1.json
+      - ERGAST_API_ENDPOINTS_RACE_RESULTS=/{year}/results/1.json
       - SPRING_JPA_HIBERNATE_DDL_AUTO=create
       - SPRING_JPA_SHOW_SQL=${SPRING_JPA_SHOW_SQL:-false}
       # Add debug logging
