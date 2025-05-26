@@ -1,10 +1,11 @@
 name: CI/CD
 
 on:
-  push:
-    branches: [ main, develop ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ develop ]
+    types: [closed]
+  push:
+    branches: [ main ]
 
 env:
   REGISTRY: ghcr.io
@@ -16,12 +17,21 @@ env:
   ERGAST_API_ENDPOINTS_RACE_RESULTS: /{year}/results/1.json
 
 jobs:
-  build-and-test:
-    name: Build, Test, and Report
+  build-and-push:
+    # Only run on PR merges to develop or pushes to main
+    if: |
+      (github.event_name == 'pull_request' && 
+       github.event.action == 'closed' && 
+       github.event.pull_request.merged == true && 
+       github.event.pull_request.base.ref == 'develop') ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
-    - name: Checkout code
+    - name: Checkout repository
       uses: actions/checkout@v4
 
     - name: Set up JDK 17
@@ -80,83 +90,83 @@ jobs:
           rm -rf secrets/
         fi
 
-  docker:
-    name: Build and Push Docker Image
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
+    docker:
+      name: Build and Push Docker Image
+      needs: build-and-push
+      runs-on: ubuntu-latest
+      permissions:
+        contents: read
+        packages: write
 
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-      with:
-        platforms: linux/amd64
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: linux/amd64
 
-    # Create secrets for Docker build
-    - name: Setup database credentials
-      run: |
-        # Create secrets directory with proper permissions
-        mkdir -p secrets
-        chmod 700 secrets
+      # Create secrets for Docker build
+      - name: Setup database credentials
+        run: |
+          # Create secrets directory with proper permissions
+          mkdir -p secrets
+          chmod 700 secrets
 
-        # Generate and store database password
-        echo "${{ secrets.DB_PASSWORD }}" > secrets/db_password.txt
-        
-        # Verify file creation and permissions
-        if [ ! -f secrets/db_password.txt ]; then
-          echo "Error: Failed to create password file"
-          exit 1
-        fi
-        
-        # Set restrictive permissions
-        chmod 600 secrets/db_password.txt
-        
-        # Verify file content
-        if [ ! -s secrets/db_password.txt ]; then
-          echo "Error: Password file is empty"
-          exit 1
-        fi
+          # Generate and store database password
+          echo "${{ secrets.DB_PASSWORD }}" > secrets/db_password.txt
+          
+          # Verify file creation and permissions
+          if [ ! -f secrets/db_password.txt ]; then
+            echo "Error: Failed to create password file"
+            exit 1
+          fi
+          
+          # Set restrictive permissions
+          chmod 600 secrets/db_password.txt
+          
+          # Verify file content
+          if [ ! -s secrets/db_password.txt ]; then
+            echo "Error: Password file is empty"
+            exit 1
+          fi
 
-    - name: Log in to GHCR
-      uses: docker/login-action@v3
-      with:
-        registry: ${{ env.REGISTRY }}
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build and push
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        push: true
-        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-        platforms: linux/amd64
-        build-args: |
-          DOCKER_BUILDKIT=1
-          ERGAST_API_BASE_URL=${{ env.ERGAST_API_BASE_URL }}
-          ERGAST_API_ENDPOINTS_DRIVER_STANDINGS=${{ env.ERGAST_API_ENDPOINTS_DRIVER_STANDINGS }}
-          ERGAST_API_ENDPOINTS_RACE_RESULTS=${{ env.ERGAST_API_ENDPOINTS_RACE_RESULTS }}
-        cache-from: |
-          type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
-        cache-to: |
-          type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
-        labels: |
-          com.f1champions.description=F1 Champions API
-          com.f1champions.department=Engineering
-          com.f1champions.service=backend
-        memory: ${{ env.DOCKER_BUILD_MEMORY }}
-        cpu: ${{ env.DOCKER_BUILD_CPU }}
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          platforms: linux/amd64
+          build-args: |
+            DOCKER_BUILDKIT=1
+            ERGAST_API_BASE_URL=${{ env.ERGAST_API_BASE_URL }}
+            ERGAST_API_ENDPOINTS_DRIVER_STANDINGS=${{ env.ERGAST_API_ENDPOINTS_DRIVER_STANDINGS }}
+            ERGAST_API_ENDPOINTS_RACE_RESULTS=${{ env.ERGAST_API_ENDPOINTS_RACE_RESULTS }}
+          cache-from: |
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: |
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
+          labels: |
+            com.f1champions.description=F1 Champions API
+            com.f1champions.department=Engineering
+            com.f1champions.service=backend
+          memory: ${{ env.DOCKER_BUILD_MEMORY }}
+          cpu: ${{ env.DOCKER_BUILD_CPU }}
 
-    # Clean up secrets
-    - name: Clean up secrets
-      if: always()  # Run even if previous steps fail
-      run: |
-        if [ -d "secrets" ]; then
-          rm -rf secrets/
-        fi
+      # Clean up secrets
+      - name: Clean up secrets
+        if: always()  # Run even if previous steps fail
+        run: |
+          if [ -d "secrets" ]; then
+            rm -rf secrets/
+          fi
  
