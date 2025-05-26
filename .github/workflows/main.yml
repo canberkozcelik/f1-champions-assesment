@@ -51,13 +51,8 @@ jobs:
 
   deploy-docker:
     name: Build and Push Docker Image
-    # Only run on merges to develop or pushes to main
-    if: |
-      (github.event_name == 'pull_request' && 
-       github.event.action == 'closed' && 
-       github.event.pull_request.merged == true && 
-       github.event.pull_request.base.ref == 'develop') ||
-      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    # Only run on pushes to develop or main
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main'
     needs: build-and-test
     runs-on: ubuntu-latest
     permissions:
