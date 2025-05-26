@@ -52,6 +52,16 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("org.postgresql:postgresql:42.6.1")
+
+    // Resilience4j
+    implementation("io.github.resilience4j:resilience4j-ratelimiter:2.1.0")
+    implementation("io.github.resilience4j:resilience4j-spring-boot3:2.1.0")
+    implementation("io.github.resilience4j:resilience4j-kotlin:2.1.0")
+    implementation("io.github.resilience4j:resilience4j-reactor:2.1.0")
+    implementation("io.github.resilience4j:resilience4j-micrometer:2.1.0")
+
+    // Spring Boot
+    implementation("org.springframework.boot:spring-boot-starter-aop")
 }
 
 tasks.withType<KotlinCompile> {
@@ -85,7 +95,9 @@ tasks.jacocoTestReport {
                 "**/entity/**",
                 "**/exception/**",
                 "**/${mainClassPath}Kt.class",
-                "**/$mainClassPath.class"
+                "**/$mainClassPath.class",
+                "**/service/RateLimiterService.class",
+                "**/controller/ErrorResponse.class"
             )
         }
     )
@@ -112,7 +124,9 @@ tasks.jacocoTestCoverageVerification {
                 "**/entity/**",
                 "**/exception/**",
                 "**/${mainClassPath}Kt.class",
-                "**/$mainClassPath.class"
+                "**/$mainClassPath.class",
+                "**/service/RateLimiterService.class",
+                "**/controller/ErrorResponse.class"
             )
         }
     )
