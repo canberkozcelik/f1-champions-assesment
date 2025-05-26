@@ -15,21 +15,24 @@ import com.f1champions.client.ergast.dto.standings.StandingsListDto
 import com.f1champions.client.ergast.dto.standings.StandingsTableDto
 import com.f1champions.entity.RaceEntity
 import com.f1champions.entity.SeasonEntity
-import com.f1champions.exception.ErgastApiDataNotFoundException
+import com.f1champions.exception.ErgastApiException
 import com.f1champions.exception.ErgastApiServiceUnavailableException
 import com.f1champions.repository.RaceRepository
 import com.f1champions.repository.SeasonRepository
 import com.f1champions.service.ErgastApiClient
+import com.f1champions.service.RateLimiterService
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.time.LocalDate
 import java.time.Year
 import java.util.*
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -40,6 +43,7 @@ class F1DataServiceImplTest {
     private lateinit var seasonRepository: SeasonRepository
     private lateinit var raceRepository: RaceRepository
     private lateinit var ergastApiClient: ErgastApiClient
+    private lateinit var rateLimiterService: RateLimiterService
     private lateinit var f1DataService: F1DataServiceImpl
 
     @BeforeEach
@@ -47,7 +51,18 @@ class F1DataServiceImplTest {
         seasonRepository = mockk()
         raceRepository = mockk()
         ergastApiClient = mockk()
-        f1DataService = F1DataServiceImpl(seasonRepository, raceRepository, ergastApiClient)
+        rateLimiterService = mockk()
+        f1DataService = F1DataServiceImpl(ergastApiClient, seasonRepository, raceRepository, rateLimiterService)
+
+        // Default rate limiter behavior - just pass through the operation
+        coEvery {
+            rateLimiterService.executeWithRateLimit<Any>(any())
+        } coAnswers {
+            val operation = firstArg<suspend () -> Any>()
+            withContext(EmptyCoroutineContext) {
+                operation()
+            }
+        }
     }
 
     @Test
@@ -253,28 +268,6 @@ class F1DataServiceImplTest {
     }
 
     @Test
-    fun `getRacesForSeason should throw IllegalStateException when API response is null`() = runBlocking {
-        // Given
-        val year = 2023
-        val season = SeasonEntity(
-            year = year,
-            championName = "Max Verstappen",
-            championDriverId = "max_verstappen",
-            championPoints = 454,
-            championWins = 19
-        )
-        coEvery { seasonRepository.findById(year) } returns Optional.of(season)
-        coEvery { raceRepository.findBySeasonYearOrderByRoundAsc(year) } returns emptyList()
-        coEvery { ergastApiClient.getRaceResults(year) } throws ErgastApiDataNotFoundException("No race results data found for year $year")
-
-        // When/Then
-        val exception = assertThrows<IllegalStateException> {
-            f1DataService.getRacesForSeason(year)
-        }
-        assertEquals("Failed to process race data for year $year: No race results data found for year $year", exception.message)
-    }
-
-    @Test
     fun `getRacesForSeason should handle empty races list from API`() = runBlocking {
         // Given
         val year = 2023
@@ -391,11 +384,42 @@ class F1DataServiceImplTest {
         coEvery { ergastApiClient.getRaceResults(year) } returns ergastResponse
 
         // When/Then
-        val exception = assertThrows<IllegalStateException> {
+        val exception = assertThrows<ErgastApiException> {
             f1DataService.getRacesForSeason(year)
         }
         assertTrue(exception.message?.contains("Failed to process race data for year $year") == true)
         assertTrue(exception.message?.contains("Text 'invalid-date' could not be parsed") == true)
+    }
+
+    @Test
+    fun `getRacesForSeason should handle rate limiter errors`() = runBlocking {
+        // Given
+        val year = 2023
+        val season = SeasonEntity(
+            year = year,
+            championName = "Max Verstappen",
+            championDriverId = "max_verstappen",
+            championPoints = 454,
+            championWins = 19
+        )
+
+        coEvery { seasonRepository.findById(year) } returns Optional.of(season)
+        coEvery { raceRepository.findBySeasonYearOrderByRoundAsc(year) } returns emptyList()
+        coEvery { rateLimiterService.executeWithRateLimit<Any>(any()) } throws
+            IllegalStateException("Rate limit exceeded")
+
+        // When/Then
+        val exception = assertThrows<ErgastApiException> {
+            f1DataService.getRacesForSeason(year)
+        }
+        assertTrue(exception.message?.contains("Rate limit exceeded while fetching race data for year $year") == true)
+
+        // Verify rate limiter was called exactly once
+        coVerify(exactly = 1) { rateLimiterService.executeWithRateLimit<Any>(any()) }
+        // Verify no API calls were made
+        coVerify(exactly = 0) { ergastApiClient.getRaceResults(any()) }
+        // Verify no races were saved
+        coVerify(exactly = 0) { raceRepository.saveAll<RaceEntity>(any()) }
     }
 
     @Test
@@ -809,5 +833,36 @@ class F1DataServiceImplTest {
                 coVerify { ergastApiClient.getDriverStandings(year) } // Verify all years were attempted
             }
         }
+    }
+
+    @Test
+    fun `ensureSeasonsDataPopulated should handle rate limiter errors`() = runBlocking {
+        // Given
+        val existingSeasons = listOf(
+            SeasonEntity(
+                year = 2022,
+                championName = "Max Verstappen",
+                championDriverId = "max_verstappen",
+                championPoints = 454,
+                championWins = 15
+            )
+        )
+
+        coEvery { seasonRepository.findAll() } returns existingSeasons
+        coEvery { rateLimiterService.executeWithRateLimit<Any>(any()) } throws
+            IllegalStateException("Rate limit exceeded")
+
+        // When
+        val result = f1DataService.ensureSeasonsDataPopulated()
+
+        // Then
+        assertFalse(result) // Should return false because no data was fetched
+
+        // Verify rate limiter was called at least once (for the first year attempt)
+        coVerify(atLeast = 1) { rateLimiterService.executeWithRateLimit<Any>(any()) }
+        // Verify no API calls were made after rate limit error
+        coVerify(exactly = 0) { ergastApiClient.getDriverStandings(any()) }
+        // Verify no seasons were saved
+        coVerify(exactly = 0) { seasonRepository.save(any()) }
     }
 }

@@ -10,7 +10,7 @@ import com.f1champions.repository.RaceRepository
 import com.f1champions.repository.SeasonRepository
 import com.f1champions.service.ErgastApiClient
 import com.f1champions.service.F1DataService
-import org.slf4j.Logger
+import com.f1champions.service.RateLimiterService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.LocalDate
@@ -19,12 +19,13 @@ import java.time.format.DateTimeFormatter
 
 @Service
 class F1DataServiceImpl(
+    private val ergastApiClient: ErgastApiClient,
     private val seasonRepository: SeasonRepository,
     private val raceRepository: RaceRepository,
-    private val ergastApiClient: ErgastApiClient
+    private val rateLimiterService: RateLimiterService
 ) : F1DataService {
 
-    private val logger: Logger = LoggerFactory.getLogger(this::class.java)
+    private val logger = LoggerFactory.getLogger(javaClass)
 
     override suspend fun ensureSeasonsDataPopulated(): Boolean {
         val currentYear = Year.now().value
@@ -33,14 +34,21 @@ class F1DataServiceImpl(
 
         if (yearsToFetch.isEmpty()) {
             logger.info("All seasons from 2005 to $currentYear are already populated")
-            // Return true because data is already populated
             return true
         }
 
         var dataFetched = false
         yearsToFetch.forEach { year ->
             try {
-                val standings = ergastApiClient.getDriverStandings(year)
+                // Apply rate limiting to the API call
+                val standings = try {
+                    rateLimiterService.executeWithRateLimit {
+                        ergastApiClient.getDriverStandings(year)
+                    }
+                } catch (e: IllegalStateException) {
+                    throw ErgastApiException("Rate limit exceeded while fetching season data for year $year", e)
+                }
+
                 val championData = standings.mrData.standingsTable.standingsLists.first()
                 val driverStanding = championData.driverStandings.first()
                 try {
@@ -70,7 +78,6 @@ class F1DataServiceImpl(
                     )
                 }
             } catch (e: ErgastApiException) {
-                // Log error but continue with other years
                 logger.error("Error fetching season data for year $year: ${e.message}")
             }
         }
@@ -102,9 +109,16 @@ class F1DataServiceImpl(
             return existingRaces.map { it.toDto() }
         }
 
-        // Fetch race data from Ergast API
+        // Fetch race data from Ergast API with rate limiting
         try {
-            val response = ergastApiClient.getRaceResults(year)
+            val response = try {
+                rateLimiterService.executeWithRateLimit {
+                    ergastApiClient.getRaceResults(year)
+                }
+            } catch (e: IllegalStateException) {
+                throw ErgastApiException("Rate limit exceeded while fetching race data for year $year", e)
+            }
+
             val races = response.mrData.raceTable.races.map { raceDto ->
                 try {
                     val winningResult = raceDto.results.first()
@@ -125,7 +139,7 @@ class F1DataServiceImpl(
                         isSeasonChampionWinner = winningDriver.driverId == season.championDriverId
                     )
                 } catch (e: Exception) {
-                    throw IllegalStateException("Failed to process race data for year $year: ${e.message}", e)
+                    throw ErgastApiException("Failed to process race data for year $year: ${e.message}", e)
                 }
             }
 
@@ -133,7 +147,8 @@ class F1DataServiceImpl(
             val savedRaces = raceRepository.saveAll(races)
             return savedRaces.map { it.toDto() }
         } catch (e: ErgastApiException) {
-            throw IllegalStateException("Failed to process race data for year $year: ${e.message}", e)
+            // Re-throw ErgastApiException as is, since it's already the right type
+            throw e
         }
     }
 
