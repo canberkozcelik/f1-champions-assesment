@@ -28,27 +28,38 @@ GET /api/seasons
 
 Response:
 ```json
-{
-  "champions": [
-    {
-      "year": 2023,
-      "driver": {
-        "driverId": "max_verstappen",
-        "code": "VER",
-        "firstName": "Max",
-        "lastName": "Verstappen",
-        "nationality": "Dutch"
-      },
-      "constructor": {
-        "constructorId": "red_bull",
-        "name": "Red Bull",
-        "nationality": "Austrian"
-      },
-      "points": 575,
-      "wins": 19
-    }
-  ]
-}
+[
+  {
+    "year": 2005,
+    "championName": "Fernando Alonso",
+    "championPoints": 133,
+    "championWins": 7
+  },
+  {
+    "year": 2006,
+    "championName": "Fernando Alonso",
+    "championPoints": 134,
+    "championWins": 7
+  },
+  {
+    "year": 2007,
+    "championName": "Kimi Räikkönen",
+    "championPoints": 110,
+    "championWins": 6
+  },
+  {
+    "year": 2008,
+    "championName": "Lewis Hamilton",
+    "championPoints": 98,
+    "championWins": 5
+  },
+  {
+    "year": 2009,
+    "championName": "Jenson Button",
+    "championPoints": 95,
+    "championWins": 6
+  }
+]
 ```
 
 ### Races
@@ -63,39 +74,48 @@ Path Parameters:
 
 Response:
 ```json
-{
-  "season": 2023,
-  "races": [
-    {
-      "round": 1,
-      "raceName": "Bahrain Grand Prix",
-      "date": "2023-03-05",
-      "circuit": {
-        "circuitId": "bahrain",
-        "name": "Bahrain International Circuit",
-        "location": "Sakhir",
-        "country": "Bahrain"
-      },
-      "results": [
-        {
-          "position": 1,
-          "driver": {
-            "driverId": "max_verstappen",
-            "code": "VER",
-            "firstName": "Max",
-            "lastName": "Verstappen"
-          },
-          "constructor": {
-            "constructorId": "red_bull",
-            "name": "Red Bull"
-          },
-          "points": 25,
-          "status": "Finished"
-        }
-      ]
-    }
-  ]
-}
+[
+  {
+    "round": 1,
+    "raceName": "Austrian Grand Prix",
+    "date": "2020-07-05",
+    "circuitName": "Red Bull Ring",
+    "winningDriverName": "Valtteri Bottas",
+    "winningDriverNationality": "Finnish",
+    "winningConstructorName": "Mercedes",
+    "isSeasonChampionWinner": false
+  },
+  {
+    "round": 2,
+    "raceName": "Styrian Grand Prix",
+    "date": "2020-07-12",
+    "circuitName": "Red Bull Ring",
+    "winningDriverName": "Lewis Hamilton",
+    "winningDriverNationality": "British",
+    "winningConstructorName": "Mercedes",
+    "isSeasonChampionWinner": true
+  },
+  {
+    "round": 3,
+    "raceName": "Hungarian Grand Prix",
+    "date": "2020-07-19",
+    "circuitName": "Hungaroring",
+    "winningDriverName": "Lewis Hamilton",
+    "winningDriverNationality": "British",
+    "winningConstructorName": "Mercedes",
+    "isSeasonChampionWinner": true
+  },
+  {
+    "round": 4,
+    "raceName": "British Grand Prix",
+    "date": "2020-08-02",
+    "circuitName": "Silverstone Circuit",
+    "winningDriverName": "Lewis Hamilton",
+    "winningDriverNationality": "British",
+    "winningConstructorName": "Mercedes",
+    "isSeasonChampionWinner": true
+  }
+]
 ```
 
 ## Error Responses

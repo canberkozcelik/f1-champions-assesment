@@ -16,8 +16,8 @@ env:
   ERGAST_API_ENDPOINTS_RACE_RESULTS: /{year}/results/1.json
 
 jobs:
-  build-and-test:
-    name: Build and Test
+  build-and-test-backend:
+    name: Build and Test Backend
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -40,21 +40,46 @@ jobs:
     - name: Upload test results
       uses: actions/upload-artifact@v4
       with:
-        name: test-results
+        name: backend-test-results
         path: backend/build/reports/tests/
 
     - name: Upload JaCoCo coverage report
       uses: actions/upload-artifact@v4
       with:
-        name: coverage-report
+        name: backend-coverage-report
         path: backend/build/reports/jacoco/test/html/
         if-no-files-found: error
+
+  build-android:
+    name: Verify Android Project
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        cache: 'gradle'
+
+    - name: Verify Gradle Configuration
+      working-directory: ./frontend
+      run: ./gradlew tasks --all
+
+    - name: Check Dependencies
+      working-directory: ./frontend
+      run: ./gradlew dependencies
 
   deploy-docker:
     name: Build and Push Docker Image
     # Only run on pushes to develop or main
     if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main'
-    needs: build-and-test
+    needs: [build-and-test-backend, build-android]
     runs-on: ubuntu-latest
     permissions:
       contents: read
