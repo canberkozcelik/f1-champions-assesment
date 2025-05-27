@@ -23,23 +23,23 @@ repositories {
 }
 
 dependencies {
-    // Spring Boot Starters
+    // Spring Boot
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+
+    // Kotlin
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
 
     // Database
     runtimeOnly("org.postgresql:postgresql")
     runtimeOnly("com.h2database:h2")
     implementation("org.postgresql:postgresql:42.6.1")
-
-    // Kotlin
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("com.fasterxml.jackson.core:jackson-annotations")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
 
     // API Documentation
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0")
@@ -60,8 +60,8 @@ dependencies {
     implementation("io.github.resilience4j:resilience4j-reactor:2.1.0")
     implementation("io.github.resilience4j:resilience4j-micrometer:2.1.0")
 
-    // Spring Boot
-    implementation("org.springframework.boot:spring-boot-starter-aop")
+    // Test dependencies
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 
 tasks.withType<KotlinCompile> {
