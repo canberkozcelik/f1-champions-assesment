@@ -2,6 +2,7 @@ package com.f1champions.service.impl
 
 import com.f1champions.api.dto.RaceDto
 import com.f1champions.api.dto.SeasonDto
+import com.f1champions.client.ergast.dto.standings.ErgastDriverStandingsDto
 import com.f1champions.entity.RaceEntity
 import com.f1champions.entity.SeasonEntity
 import com.f1champions.exception.ErgastApiException
@@ -11,6 +12,7 @@ import com.f1champions.repository.SeasonRepository
 import com.f1champions.service.ErgastApiClient
 import com.f1champions.service.F1DataService
 import com.f1champions.service.RateLimiterService
+import com.f1champions.util.RetryUtil
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.LocalDate
@@ -27,6 +29,16 @@ class F1DataServiceImpl(
 
     private val logger = LoggerFactory.getLogger(javaClass)
 
+    private suspend fun fetchDriverStandingsWithRetry(year: Int): ErgastDriverStandingsDto {
+        return RetryUtil.retryWithBackoff(
+            operationName = "fetch driver standings for year $year"
+        ) {
+            rateLimiterService.executeWithRateLimit {
+                ergastApiClient.getDriverStandings(year)
+            }
+        }
+    }
+
     override suspend fun ensureSeasonsDataPopulated(): Boolean {
         val currentYear = Year.now().value
         val existingSeasons = seasonRepository.findAll().map { it.year }.toSet()
@@ -37,18 +49,13 @@ class F1DataServiceImpl(
             return true
         }
 
+        logger.info("Starting to populate data for years: ${yearsToFetch.joinToString()}")
         var dataFetched = false
+
         yearsToFetch.forEach { year ->
             try {
-                // Apply rate limiting to the API call
-                val standings = try {
-                    rateLimiterService.executeWithRateLimit {
-                        ergastApiClient.getDriverStandings(year)
-                    }
-                } catch (e: IllegalStateException) {
-                    throw ErgastApiException("Rate limit exceeded while fetching season data for year $year", e)
-                }
-
+                logger.info("Processing year $year")
+                val standings = fetchDriverStandingsWithRetry(year)
                 val championData = standings.mrData.standingsTable.standingsLists.first()
                 val driverStanding = championData.driverStandings.first()
                 try {
@@ -68,9 +75,10 @@ class F1DataServiceImpl(
                         championWins = wins
                     )
                     seasonRepository.save(seasonEntity)
-                    logger.info("Saved season data for year $year")
+                    logger.info("Successfully saved season data for year $year")
                     dataFetched = true
-                } catch (e: NumberFormatException) {
+                } catch (e: Exception) {
+                    logger.error("Error processing driver standings data for year $year: ${e.message}")
                     throw ErgastApiInvalidResponseException(
                         "Invalid points or wins format in response for year $year. " +
                             "Points: '${driverStanding.points}', Wins: '${driverStanding.wins}'",
@@ -79,9 +87,11 @@ class F1DataServiceImpl(
                 }
             } catch (e: ErgastApiException) {
                 logger.error("Error fetching season data for year $year: ${e.message}")
+                // Continue to next year
             }
         }
 
+        logger.info("Finished populating data. Successfully fetched data: $dataFetched")
         return dataFetched
     }
 
@@ -109,14 +119,14 @@ class F1DataServiceImpl(
             return existingRaces.map { it.toDto() }
         }
 
-        // Fetch race data from Ergast API with rate limiting
+        // Fetch race data from Ergast API with rate limiting and retry
         try {
-            val response = try {
+            val response = RetryUtil.retryWithBackoff(
+                operationName = "fetch race results for year $year"
+            ) {
                 rateLimiterService.executeWithRateLimit {
                     ergastApiClient.getRaceResults(year)
                 }
-            } catch (e: IllegalStateException) {
-                throw ErgastApiException("Rate limit exceeded while fetching race data for year $year", e)
             }
 
             val races = response.mrData.raceTable.races.map { raceDto ->

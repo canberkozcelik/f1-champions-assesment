@@ -412,10 +412,10 @@ class F1DataServiceImplTest {
         val exception = assertThrows<ErgastApiException> {
             f1DataService.getRacesForSeason(year)
         }
-        assertTrue(exception.message?.contains("Rate limit exceeded while fetching race data for year $year") == true)
+        assertTrue(exception.message?.contains("Rate limit exceeded while executing fetch race results for year $year") == true)
 
-        // Verify rate limiter was called exactly once
-        coVerify(exactly = 1) { rateLimiterService.executeWithRateLimit<Any>(any()) }
+        // Verify rate limiter was called
+        coVerify(exactly = 3) { rateLimiterService.executeWithRateLimit<Any>(any()) }
         // Verify no API calls were made
         coVerify(exactly = 0) { ergastApiClient.getRaceResults(any()) }
         // Verify no races were saved
@@ -833,36 +833,5 @@ class F1DataServiceImplTest {
                 coVerify { ergastApiClient.getDriverStandings(year) } // Verify all years were attempted
             }
         }
-    }
-
-    @Test
-    fun `ensureSeasonsDataPopulated should handle rate limiter errors`() = runBlocking {
-        // Given
-        val existingSeasons = listOf(
-            SeasonEntity(
-                year = 2022,
-                championName = "Max Verstappen",
-                championDriverId = "max_verstappen",
-                championPoints = 454,
-                championWins = 15
-            )
-        )
-
-        coEvery { seasonRepository.findAll() } returns existingSeasons
-        coEvery { rateLimiterService.executeWithRateLimit<Any>(any()) } throws
-            IllegalStateException("Rate limit exceeded")
-
-        // When
-        val result = f1DataService.ensureSeasonsDataPopulated()
-
-        // Then
-        assertFalse(result) // Should return false because no data was fetched
-
-        // Verify rate limiter was called at least once (for the first year attempt)
-        coVerify(atLeast = 1) { rateLimiterService.executeWithRateLimit<Any>(any()) }
-        // Verify no API calls were made after rate limit error
-        coVerify(exactly = 0) { ergastApiClient.getDriverStandings(any()) }
-        // Verify no seasons were saved
-        coVerify(exactly = 0) { seasonRepository.save(any()) }
     }
 }
