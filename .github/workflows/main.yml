@@ -29,7 +29,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    if: |
+      github.event_name == 'pull_request' && 
+      github.base_ref == 'develop' && 
+      (contains(github.event.pull_request.files.*.path, 'backend/') || 
+       contains(github.event.pull_request.files.*.path, '.github/workflows/main.yml'))
 
     steps:
     - name: Debug Event
@@ -39,7 +43,7 @@ jobs:
         echo "Head ref: ${{ github.head_ref }}"
         echo "Ref: ${{ github.ref }}"
         echo "Changed files:"
-        git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} || true
+        echo "${{ join(github.event.pull_request.files.*.path, '\n') }}"
 
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -73,7 +77,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    if: |
+      github.event_name == 'pull_request' && 
+      github.base_ref == 'develop' && 
+      (contains(github.event.pull_request.files.*.path, 'frontend/') || 
+       contains(github.event.pull_request.files.*.path, '.github/workflows/main.yml'))
 
     steps:
     - name: Debug Event
@@ -83,7 +91,7 @@ jobs:
         echo "Head ref: ${{ github.head_ref }}"
         echo "Ref: ${{ github.ref }}"
         echo "Changed files:"
-        git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} || true
+        echo "${{ join(github.event.pull_request.files.*.path, '\n') }}"
 
     - name: Checkout repository
       uses: actions/checkout@v4
