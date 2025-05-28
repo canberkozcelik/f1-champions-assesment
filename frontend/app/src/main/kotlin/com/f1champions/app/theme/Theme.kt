@@ -1,4 +1,4 @@
-package com.f1champions.app.ui.theme
+package com.f1champions.app.theme
 
 import android.app.Activity
 import android.os.Build

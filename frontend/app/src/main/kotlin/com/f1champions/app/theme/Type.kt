@@ -1,4 +1,4 @@
-package com.f1champions.app.ui.theme
+package com.f1champions.app.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

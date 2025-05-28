@@ -37,10 +37,6 @@ android {
         compose = true
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.composeCompiler.get()
-    }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -60,6 +56,7 @@ android {
 dependencies {
     // Project modules
     implementation(project(":core"))
+    implementation(project(":data"))
     implementation(project(":feature:seasonslist"))
     implementation(project(":feature:racewinners"))
 
