@@ -3,8 +3,16 @@ name: CI/CD
 on:
   pull_request:
     branches: [ develop ]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - '.github/workflows/main.yml'
   push:
     branches: [ develop, main ]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - '.github/workflows/main.yml'
 
 env:
   REGISTRY: ghcr.io
@@ -21,6 +29,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    if: |
+      github.event_name == 'push' || 
+      contains(github.event.pull_request.changed_files, 'backend/') ||
+      contains(github.event.pull_request.changed_files, '.github/workflows/main.yml')
 
     steps:
     - name: Checkout repository
@@ -55,6 +67,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    if: |
+      github.event_name == 'push' || 
+      contains(github.event.pull_request.changed_files, 'frontend/') ||
+      contains(github.event.pull_request.changed_files, '.github/workflows/main.yml')
 
     steps:
     - name: Checkout repository
@@ -77,9 +93,11 @@ jobs:
 
   deploy-docker:
     name: Build and Push Docker Image
-    # Only run on pushes to develop or main
-    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main'
-    needs: [build-and-test-backend, build-android]
+    # Only run on pushes to main branch
+    if: |
+      github.ref == 'refs/heads/main' &&
+      (contains(github.event.head_commit.modified, 'backend/') || contains(github.event.head_commit.modified, '.github/workflows/main.yml'))
+    needs: [build-and-test-backend]
     runs-on: ubuntu-latest
     permissions:
       contents: read
