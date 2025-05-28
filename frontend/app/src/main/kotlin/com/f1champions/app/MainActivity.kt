@@ -14,6 +14,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.f1champions.app.theme.F1ChampionsTheme
+import com.f1champions.feature.racewinners.RaceWinnersFeature.screen
 import com.f1champions.feature.seasonslist.SeasonsListFeature
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -49,14 +50,8 @@ fun MainNavigation(
         }
 
         // Race Winners Screen
-        composable("race_winners/{year}") { backStackEntry ->
-            val year = backStackEntry.arguments?.getString("year")?.toIntOrNull()
-            if (year != null) {
-//                RaceWinnersFeature.Screen(
-//                    year = year,
-//                    onBackClick = { navController.popBackStack() }
-//                )
-            }
-        }
+        screen(
+            onBackClick = { navController.popBackStack() }
+        )
     }
 }

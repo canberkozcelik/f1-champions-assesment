@@ -12,6 +12,8 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
@@ -50,6 +52,18 @@ object NetworkModule {
         return Moshi.Builder()
             .add(KotlinJsonAdapterFactory())
             .add(Date::class.java, Rfc3339DateJsonAdapter())
+            .add(LocalDate::class.java, object : com.squareup.moshi.JsonAdapter<LocalDate>() {
+                private val formatter = DateTimeFormatter.ISO_LOCAL_DATE
+
+                override fun fromJson(reader: com.squareup.moshi.JsonReader): LocalDate? {
+                    val dateStr = reader.nextString()
+                    return if (dateStr != null) LocalDate.parse(dateStr, formatter) else null
+                }
+
+                override fun toJson(writer: com.squareup.moshi.JsonWriter, value: LocalDate?) {
+                    writer.value(value?.format(formatter))
+                }
+            })
             .build()
     }
 
