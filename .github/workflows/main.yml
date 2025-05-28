@@ -24,8 +24,27 @@ env:
   ERGAST_API_ENDPOINTS_RACE_RESULTS: /{year}/results/1.json
 
 jobs:
+  debug-workflow:
+    name: Debug Workflow
+    runs-on: ubuntu-latest
+    steps:
+    - name: Debug Event
+      run: |
+        echo "Event name: ${{ github.event_name }}"
+        echo "Base ref: ${{ github.base_ref }}"
+        echo "Head ref: ${{ github.head_ref }}"
+        echo "Ref: ${{ github.ref }}"
+        echo "Action: ${{ github.event.action }}"
+        echo "PR number: ${{ github.event.pull_request.number }}"
+        echo "PR state: ${{ github.event.pull_request.state }}"
+        echo "Changed files:"
+        echo "${{ join(github.event.pull_request.files.*.path, '\n') }}"
+        echo "Files array: ${{ toJSON(github.event.pull_request.files) }}"
+        echo "Event payload: ${{ toJSON(github.event) }}"
+
   build-and-test-backend:
     name: Build and Test Backend
+    needs: debug-workflow
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -36,15 +55,6 @@ jobs:
        contains(github.event.pull_request.files.*.path, '.github/workflows/main.yml'))
 
     steps:
-    - name: Debug Event
-      run: |
-        echo "Event name: ${{ github.event_name }}"
-        echo "Base ref: ${{ github.base_ref }}"
-        echo "Head ref: ${{ github.head_ref }}"
-        echo "Ref: ${{ github.ref }}"
-        echo "Changed files:"
-        echo "${{ join(github.event.pull_request.files.*.path, '\n') }}"
-
     - name: Checkout repository
       uses: actions/checkout@v4
 
@@ -74,6 +84,7 @@ jobs:
 
   build-android:
     name: Build Android Project
+    needs: debug-workflow
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -84,15 +95,6 @@ jobs:
        contains(github.event.pull_request.files.*.path, '.github/workflows/main.yml'))
 
     steps:
-    - name: Debug Event
-      run: |
-        echo "Event name: ${{ github.event_name }}"
-        echo "Base ref: ${{ github.base_ref }}"
-        echo "Head ref: ${{ github.head_ref }}"
-        echo "Ref: ${{ github.ref }}"
-        echo "Changed files:"
-        echo "${{ join(github.event.pull_request.files.*.path, '\n') }}"
-
     - name: Checkout repository
       uses: actions/checkout@v4
 
