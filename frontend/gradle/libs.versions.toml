@@ -1,5 +1,6 @@
 [versions]
 agp = "8.8.1"
+javaxInject = "1"
 kotlin = "2.0.0"
 coreKtx = "1.15.0"
 appcompat = "1.6.1"
@@ -29,6 +30,7 @@ targetSdk = "35"
 # Core Android
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+javax-inject = { module = "javax.inject:javax.inject", version.ref = "javaxInject" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
@@ -66,6 +68,9 @@ androidx-test-espresso-core = { group = "androidx.test.espresso", name = "espres
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 cash-turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "cash-turbine" }
+
+# Kotlin
+kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
