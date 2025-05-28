@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="race_winners_title">%d Season Race Winners</string>
+    <string name="back_button">Back</string>
+    <string name="winner_format">%1$s - %2$s</string>
+</resources> 

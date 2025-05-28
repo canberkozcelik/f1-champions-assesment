@@ -1,15 +1,18 @@
 package com.f1champions.data.mapper
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import com.f1champions.data.api.dto.RaceDetailApiDto
 import com.f1champions.domain.model.RaceWinnerInfo
-import java.text.SimpleDateFormat
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 /**
  * Maps API DTOs to domain models for race-related data.
  */
+@RequiresApi(Build.VERSION_CODES.O)
 object RaceMapper {
-    private val DATE_FORMATTER = SimpleDateFormat("MMMM d, yyyy", Locale.US)
+    private val DATE_FORMATTER = DateTimeFormatter.ofPattern("MMMM d, yyyy", Locale.US)
 
     /**
      * Converts a [RaceDetailApiDto] to a [RaceWinnerInfo].
@@ -21,7 +24,7 @@ object RaceMapper {
         return RaceWinnerInfo(
             raceName = dto.raceName,
             circuitName = dto.circuitName,
-            date = DATE_FORMATTER.format(dto.date),
+            date = dto.date.format(DATE_FORMATTER),
             winnerName = dto.winningDriverName,
             constructorName = dto.winningConstructorName,
             isSeasonChampionWinner = dto.isSeasonChampionWinner
