@@ -40,23 +40,22 @@ dependencies {
     // Project modules
     api(project(":domain"))
 
-    // Networking - exposed to other modules
+    // Kotlin
+    implementation(libs.kotlin.stdlib)
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.android)
+
+    // Networking
     api(libs.retrofit)
     api(libs.retrofit.converter.moshi)
     api(libs.moshi.kotlin)
-
-    // Networking - internal implementation
+    implementation(libs.moshi.adapters)
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging)
-    implementation(libs.moshi.adapters)
 
-    // Dagger Hilt
+    // Dependency Injection
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
-    
-    // Kotlin
-    implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.kotlinx.coroutines.android)
     
     // Testing
     testImplementation(libs.junit)
