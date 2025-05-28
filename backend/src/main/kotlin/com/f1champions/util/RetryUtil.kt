@@ -25,7 +25,7 @@ object RetryUtil {
             } catch (e: Exception) {
                 lastException = e
                 val isRateLimitError = when (e) {
-                    is IllegalStateException -> e.message?.contains("Rate limit exceeded") == true
+                    is IllegalStateException -> e.message?.contains("Rate limit exceeded", ignoreCase = true) == true
                     is RequestNotPermitted -> true
                     else -> false
                 }
