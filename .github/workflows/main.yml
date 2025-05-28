@@ -31,8 +31,10 @@ jobs:
       contents: read
     if: |
       (github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')) || 
-      (github.event_name == 'pull_request' && github.base_ref == 'develop') &&
-      (contains(github.event.pull_request.changed_files, 'backend/') || contains(github.event.pull_request.changed_files, '.github/workflows/main.yml'))
+      (github.event_name == 'pull_request' && github.base_ref == 'develop' && (
+        contains(github.event.pull_request.files.*.path, 'backend/') ||
+        contains(github.event.pull_request.files.*.path, '.github/workflows/main.yml')
+      ))
 
     steps:
     - name: Checkout repository
@@ -69,8 +71,10 @@ jobs:
       contents: read
     if: |
       (github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')) || 
-      (github.event_name == 'pull_request' && github.base_ref == 'develop') &&
-      (contains(github.event.pull_request.changed_files, 'frontend/') || contains(github.event.pull_request.changed_files, '.github/workflows/main.yml'))
+      (github.event_name == 'pull_request' && github.base_ref == 'develop' && (
+        contains(github.event.pull_request.files.*.path, 'frontend/') ||
+        contains(github.event.pull_request.files.*.path, '.github/workflows/main.yml')
+      ))
 
     steps:
     - name: Checkout repository
