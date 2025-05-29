@@ -51,7 +51,7 @@ fun MainNavigation(
 
         // Race Winners Screen
         screen(
-            onBackClick = { navController.popBackStack() }
+            onNavigateBack = { navController.popBackStack() }
         )
     }
 }
