@@ -25,18 +25,26 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
-    private const val BASE_URL = "http://localhost:8080/"  // TODO: Move to BuildConfig or environment
 
     /**
      * Provides a configured OkHttpClient instance with logging interceptor.
+     * Logging level is set based on the environment:
+     * - Development: BODY level for detailed logging
+     * - Other environments: BASIC level for minimal logging
      */
     @Provides
     @Singleton
-    fun provideOkHttpClient(): OkHttpClient {
+    fun provideOkHttpClient(networkConfig: NetworkConfig): OkHttpClient {
+        val loggingInterceptor = HttpLoggingInterceptor().apply {
+            level = if (networkConfig.environment == "Development") {
+                HttpLoggingInterceptor.Level.BODY
+            } else {
+                HttpLoggingInterceptor.Level.BASIC
+            }
+        }
+
         return OkHttpClient.Builder()
-            .addInterceptor(HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BODY
-            })
+            .addInterceptor(loggingInterceptor)
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
@@ -69,12 +77,13 @@ object NetworkModule {
 
     /**
      * Provides a configured Retrofit instance with Moshi converter and OkHttp client.
+     * Uses the baseUrl from NetworkConfig which is environment-specific.
      */
     @Provides
     @Singleton
-    fun provideRetrofit(okHttpClient: OkHttpClient, moshi: Moshi): Retrofit {
+    fun provideRetrofit(okHttpClient: OkHttpClient, moshi: Moshi, networkConfig: NetworkConfig): Retrofit {
         return Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(networkConfig.baseUrl)
             .client(okHttpClient)
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()

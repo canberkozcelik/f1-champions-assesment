@@ -21,6 +21,10 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        buildFeatures {
+            buildConfig = true
+        }
     }
 
     buildTypes {
@@ -30,6 +34,28 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        debug {
+            applicationIdSuffix = ".debug"
+            isDebuggable = true
+        }
+    }
+
+    // Add product flavors
+    flavorDimensions += "environment"
+    productFlavors {
+        create("dev") {
+            dimension = "environment"
+            applicationIdSuffix = ".dev"
+            // Base URL includes the API prefix as it's an infrastructure concern
+            buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8080/api/\"")
+            buildConfigField("String", "ENVIRONMENT", "\"Development\"")
+        }
+        create("staging") {
+            dimension = "environment"
+            applicationIdSuffix = ".staging"
+            buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8080/api/\"")
+            buildConfigField("String", "ENVIRONMENT", "\"Staging\"")
         }
     }
 
