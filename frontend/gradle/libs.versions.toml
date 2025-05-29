@@ -24,7 +24,7 @@ moshi = "1.15.0"
 javapoet = "1.13.0"
 
 compileSdk = "35"
-minSdk = "24"
+minSdk = "26"
 targetSdk = "35"
 
 [libraries]

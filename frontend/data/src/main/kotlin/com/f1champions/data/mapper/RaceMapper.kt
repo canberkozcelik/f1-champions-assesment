@@ -10,7 +10,6 @@ import java.util.Locale
 /**
  * Maps API DTOs to domain models for race-related data.
  */
-@RequiresApi(Build.VERSION_CODES.O)
 object RaceMapper {
     private val DATE_FORMATTER = DateTimeFormatter.ofPattern("MMMM d, yyyy", Locale.US)
 
