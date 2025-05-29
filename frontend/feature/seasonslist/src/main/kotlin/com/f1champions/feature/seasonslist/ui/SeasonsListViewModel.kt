@@ -2,7 +2,7 @@ package com.f1champions.feature.seasonslist.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.f1champions.domain.exception.F1Exception
+import com.f1champions.domain.exception.*
 import com.f1champions.domain.usecase.GetSeasonChampionsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,10 +39,44 @@ class SeasonsListViewModel @Inject constructor(
             try {
                 val seasons = getSeasonChampionsUseCase()
                 _uiState.update { SeasonsListUiState.Success(seasons) }
+            } catch (e: F1NetworkException) {
+                _uiState.update { 
+                    SeasonsListUiState.Error(
+                        errorType = if (e.isOffline) ErrorType.OFFLINE else ErrorType.TIMEOUT,
+                        message = e.message,
+                        canRetry = true
+                    )
+                }
+            } catch (e: F1RateLimitException) {
+                _uiState.update { 
+                    SeasonsListUiState.Error(
+                        errorType = ErrorType.RATE_LIMIT,
+                        message = e.message,
+                        canRetry = true
+                    )
+                }
+            } catch (e: F1ServerException) {
+                _uiState.update { 
+                    SeasonsListUiState.Error(
+                        errorType = ErrorType.SERVER_ERROR,
+                        message = e.message,
+                        canRetry = true
+                    )
+                }
             } catch (e: F1Exception) {
                 _uiState.update { 
                     SeasonsListUiState.Error(
-                        message = e.message ?: "An unexpected error occurred"
+                        errorType = ErrorType.UNEXPECTED,
+                        message = e.message,
+                        canRetry = true
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.update { 
+                    SeasonsListUiState.Error(
+                        errorType = ErrorType.UNEXPECTED,
+                        message = "An unexpected error occurred",
+                        canRetry = true
                     )
                 }
             }

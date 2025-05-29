@@ -8,27 +8,20 @@ import com.f1champions.feature.racewinners.ui.RaceWinnersScreen
 
 /**
  * Feature object for the Race Winners screen.
- * Provides navigation and screen composable for displaying race winners.
+ * Provides navigation and screen composable for displaying race winners for a specific season.
  */
 object RaceWinnersFeature {
     private const val YEAR_ARG = "year"
-    private const val ROUTE = "race_winners/{$YEAR_ARG}"
-
-    /**
-     * Creates a navigation route for the Race Winners screen.
-     *
-     * @param year The championship year to display race winners for
-     * @return The navigation route string
-     */
-    fun createRoute(year: Int) = "race_winners/$year"
-
+    const val ROUTE = "race_winners/{$YEAR_ARG}"
+    
     /**
      * Adds the Race Winners screen to the navigation graph.
+     * The screen requires a year parameter.
      *
-     * @param onBackClick Callback for handling back navigation
+     * @param onNavigateBack Callback for handling back navigation
      */
     fun NavGraphBuilder.screen(
-        onBackClick: () -> Unit
+        onNavigateBack: () -> Unit
     ) {
         composable(
             route = ROUTE,
@@ -43,7 +36,7 @@ object RaceWinnersFeature {
             
             RaceWinnersScreen(
                 year = year,
-                onBackClick = onBackClick
+                onNavigateBack = onNavigateBack
             )
         }
     }

@@ -28,9 +28,43 @@ sealed class SeasonsListUiState {
     /**
      * State when there's an error loading the seasons list.
      *
+     * @property errorType The type of error that occurred
      * @property message Error message to display to the user
+     * @property canRetry Whether the operation can be retried
      */
     data class Error(
-        val message: String
+        val errorType: ErrorType,
+        val message: String,
+        val canRetry: Boolean = true
     ) : SeasonsListUiState()
+}
+
+/**
+ * Types of errors that can occur in the seasons list screen.
+ */
+enum class ErrorType {
+    /**
+     * Network is offline or unavailable
+     */
+    OFFLINE,
+
+    /**
+     * Connection timed out
+     */
+    TIMEOUT,
+
+    /**
+     * Server returned an error
+     */
+    SERVER_ERROR,
+
+    /**
+     * Rate limit exceeded
+     */
+    RATE_LIMIT,
+
+    /**
+     * Unexpected error occurred
+     */
+    UNEXPECTED
 } 

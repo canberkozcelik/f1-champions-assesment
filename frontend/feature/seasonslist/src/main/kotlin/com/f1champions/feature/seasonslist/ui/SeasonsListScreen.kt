@@ -4,16 +4,23 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.f1champions.domain.model.SeasonChampionInfo
+import com.f1champions.feature.seasonslist.R
 
 /**
  * Screen that displays the list of Formula 1 World Champions.
@@ -57,8 +64,11 @@ fun SeasonsListScreen(
                     )
                 }
                 is SeasonsListUiState.Error -> {
+                    val error = uiState as SeasonsListUiState.Error
                     ErrorContent(
-                        message = (uiState as SeasonsListUiState.Error).message,
+                        errorType = error.errorType,
+                        message = error.message,
+                        canRetry = error.canRetry,
                         onRetry = viewModel::retry
                     )
                 }
@@ -127,7 +137,9 @@ private fun LoadingIndicator() {
 
 @Composable
 private fun ErrorContent(
+    errorType: ErrorType,
     message: String,
+    canRetry: Boolean,
     onRetry: () -> Unit
 ) {
     Column(
@@ -137,15 +149,41 @@ private fun ErrorContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        // Error icon based on error type
+        Icon(
+            imageVector = when (errorType) {
+                ErrorType.OFFLINE -> Icons.Default.CloudOff
+                ErrorType.TIMEOUT -> Icons.Default.Timer
+                else -> Icons.Default.Error
+            },
+            contentDescription = null,
+            modifier = Modifier.size(48.dp),
+            tint = MaterialTheme.colorScheme.error
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
         Text(
             text = message,
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.error
         )
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = onRetry) {
-            Text("Retry")
+        
+        if (canRetry) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = onRetry,
+                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Retry")
+            }
         }
     }
 } 
