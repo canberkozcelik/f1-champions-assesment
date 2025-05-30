@@ -167,13 +167,15 @@ The frontend is an Android application written in Kotlin using modern Android de
 
 The application consists of two main screens:
 
-1. **Seasons List Screen**
+1. **Seasons List Screen**  
+
    ![Seasons List Screen](frontend/screenshots/ss_seasonlist.png)
    - Displays a list of F1 seasons
    - Shows the champion driver and constructor for each season
    - Allows navigation to race winners for a selected season
 
-2. **Race Winners Screen**
+2. **Race Winners Screen**  
+
    ![Race Winners Screen](frontend/screenshots/ss_racewinners.png)
    - Shows all race winners for a selected season
    - Displays race name, date, and winner details
