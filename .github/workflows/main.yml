@@ -146,7 +146,7 @@ jobs:
 
   publish-and-deploy:
     name: Publish Artifacts and Deploy
-    needs: [changes, build-and-test-backend, build-android]
+    needs: [changes, build-and-test-backend, build-and-test-android]
     if: |
       github.ref == 'refs/heads/main' && 
       (needs.changes.outputs.backend_changed == 'true' || 
