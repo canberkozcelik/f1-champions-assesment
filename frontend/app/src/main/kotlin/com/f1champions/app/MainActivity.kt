@@ -14,8 +14,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.f1champions.app.theme.F1ChampionsTheme
-import com.f1champions.feature.racewinners.RaceWinnersFeature.screen
-import com.f1champions.feature.seasonslist.SeasonsListFeature
+import com.f1champions.feature.racewinners.navigation.RaceWinnersFeature.screen
+import com.f1champions.feature.seasonslist.navigation.SeasonsListFeature
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

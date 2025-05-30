@@ -1,10 +1,10 @@
-package com.f1champions.feature.racewinners
+package com.f1champions.feature.racewinners.navigation
 
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.f1champions.feature.racewinners.ui.RaceWinnersScreen
+import com.f1champions.feature.racewinners.ui.screen.RaceWinnersScreen
 
 /**
  * Feature object for the Race Winners screen.

@@ -1,4 +1,4 @@
-package com.f1champions.feature.racewinners.ui
+package com.f1champions.feature.racewinners.ui.screen
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,6 +19,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.f1champions.feature.racewinners.R
 import com.f1champions.feature.racewinners.model.RaceWinner
+import com.f1champions.feature.racewinners.ui.ErrorType
+import com.f1champions.feature.racewinners.ui.RaceWinnersUiState
+import com.f1champions.feature.racewinners.ui.RaceWinnersViewModel
 
 /**
  * Screen that displays the list of race winners for a specific season.

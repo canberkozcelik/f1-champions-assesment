@@ -1,4 +1,4 @@
-package com.f1champions.feature.seasonslist.ui
+package com.f1champions.feature.seasonslist.ui.screen
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,16 +11,18 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.f1champions.domain.model.SeasonChampionInfo
-import com.f1champions.feature.seasonslist.R
+import com.f1champions.feature.seasonslist.ui.ErrorType
+import com.f1champions.feature.seasonslist.ui.SeasonsListUiState
+import com.f1champions.feature.seasonslist.ui.SeasonsListViewModel
 
 /**
  * Screen that displays the list of Formula 1 World Champions.
@@ -35,6 +37,11 @@ fun SeasonsListScreen(
     viewModel: SeasonsListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    // Load seasons when the screen is first displayed
+    LaunchedEffect(Unit) {
+        viewModel.loadSeasons()
+    }
 
     Scaffold(
         topBar = {
