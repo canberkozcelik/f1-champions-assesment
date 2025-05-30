@@ -76,8 +76,8 @@ class RaceWinnersViewModelTest {
             )
         )
         val uiRaceWinners = listOf(
-            RaceWinner("Monaco GP", "2023-05-28", Winner("Max Verstappen", "Red Bull")),
-            RaceWinner("Spanish GP", "2023-06-04", Winner("Max Verstappen", "Red Bull"))
+            RaceWinner("Monaco GP", "2023-05-28", Winner("Max Verstappen", "Red Bull"), true),
+            RaceWinner("Spanish GP", "2023-06-04", Winner("Max Verstappen", "Red Bull"), true)
         )
         coEvery { repository.getRaceWinners(year) } returns domainRaceWinners
         every { mapper.toUiModels(domainRaceWinners) } returns uiRaceWinners
@@ -250,7 +250,7 @@ class RaceWinnersViewModelTest {
             )
         )
         val uiRaceWinners = listOf(
-            RaceWinner("Monaco GP", "2023-05-28", Winner("Max Verstappen", "Red Bull"))
+            RaceWinner("Monaco GP", "2023-05-28", Winner("Max Verstappen", "Red Bull"), true)
         )
         coEvery { repository.getRaceWinners(year) } throws F1NetworkException(
             isOffline = true,

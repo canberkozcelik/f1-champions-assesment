@@ -8,11 +8,13 @@ package com.f1champions.feature.racewinners.model
  * @property raceName The name of the race (e.g., "Monaco Grand Prix")
  * @property date The formatted date of the race
  * @property winner Information about the race winner
+ * @property isSeasonChampionWinner Whether the race winner is also the season champion
  */
 data class RaceWinner(
     val raceName: String,
     val date: String,
-    val winner: Winner
+    val winner: Winner,
+    val isSeasonChampionWinner: Boolean
 )
 
 /**

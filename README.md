@@ -122,16 +122,6 @@ The API is documented using OpenAPI/Swagger. Access the documentation at:
 - All sensitive files are git-ignored
 - Production credentials should be managed through proper secret management
 
-## Contributing
-
-1. Create a feature branch from `develop`
-2. Make your changes
-3. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ### Frontend Development
 
 The frontend is an Android application written in Kotlin using modern Android development practices:
@@ -227,3 +217,13 @@ The frontend is integrated into the CI/CD pipeline:
 - Unit tests run on every build
 - Code coverage reports generated and uploaded as artifacts
 - Build artifacts (APK/AAR) uploaded for each successful build 
+
+## Contributing
+
+1. Create a feature branch from `develop`
+2. Make your changes
+3. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
