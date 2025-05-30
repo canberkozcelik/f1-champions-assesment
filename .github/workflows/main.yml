@@ -130,6 +130,18 @@ jobs:
       working-directory: ./frontend
       run: ./gradlew assembleDebug
 
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-build-artifacts
+        path: |
+          frontend/app/build/outputs/apk/debug/*.apk
+          frontend/core/build/outputs/aar/*.aar
+          frontend/data/build/outputs/aar/*.aar
+          frontend/domain/build/outputs/aar/*.aar
+          frontend/feature/racewinners/build/outputs/aar/*.aar
+        if-no-files-found: error # Fails if no artifacts are found
+
   deploy-docker:
     name: Build and Push Docker Image
     needs: [build-and-test-backend]
