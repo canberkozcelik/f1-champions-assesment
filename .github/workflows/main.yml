@@ -87,8 +87,8 @@ jobs:
         path: backend/build/reports/jacoco/test/html/
         if-no-files-found: error # Fails if report not found
 
-  build-android:
-    name: Build Android Project
+  build-and-test-android:
+    name: Build and Test Android Project
     runs-on: ubuntu-latest
     needs: changes
     if: needs.changes.outputs.frontend_changed == 'true' || needs.changes.outputs.workflow_changed == 'true'
