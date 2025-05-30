@@ -19,8 +19,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.f1champions.core.ui.components.ErrorContent
+import com.f1champions.core.ui.components.ErrorType
+import com.f1champions.core.ui.components.LoadingIndicator
 import com.f1champions.domain.model.SeasonChampionInfo
-import com.f1champions.feature.seasonslist.ui.ErrorType
 import com.f1champions.feature.seasonslist.ui.SeasonsListUiState
 import com.f1champions.feature.seasonslist.ui.SeasonsListViewModel
 

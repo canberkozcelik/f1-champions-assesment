@@ -1,5 +1,6 @@
 package com.f1champions.feature.seasonslist.ui
 
+import com.f1champions.core.ui.components.ErrorType
 import com.f1champions.domain.model.SeasonChampionInfo
 
 /**
@@ -38,33 +39,3 @@ sealed class SeasonsListUiState {
         val canRetry: Boolean = true
     ) : SeasonsListUiState()
 }
-
-/**
- * Types of errors that can occur in the seasons list screen.
- */
-enum class ErrorType {
-    /**
-     * Network is offline or unavailable
-     */
-    OFFLINE,
-
-    /**
-     * Connection timed out
-     */
-    TIMEOUT,
-
-    /**
-     * Server returned an error
-     */
-    SERVER_ERROR,
-
-    /**
-     * Rate limit exceeded
-     */
-    RATE_LIMIT,
-
-    /**
-     * Unexpected error occurred
-     */
-    UNEXPECTED
-} 

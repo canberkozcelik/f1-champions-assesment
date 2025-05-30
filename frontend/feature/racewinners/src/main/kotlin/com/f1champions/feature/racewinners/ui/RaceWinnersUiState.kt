@@ -1,5 +1,6 @@
 package com.f1champions.feature.racewinners.ui
 
+import com.f1champions.core.ui.components.ErrorType
 import com.f1champions.feature.racewinners.model.RaceWinner
 
 /**
@@ -32,44 +33,4 @@ sealed interface RaceWinnersUiState {
         val message: String,
         val canRetry: Boolean = true
     ) : RaceWinnersUiState
-}
-
-/**
- * Types of errors that can occur in the race winners screen.
- */
-enum class ErrorType {
-    /**
-     * Network is offline or unavailable
-     */
-    OFFLINE,
-
-    /**
-     * Connection timed out
-     */
-    TIMEOUT,
-
-    /**
-     * Server returned an error
-     */
-    SERVER_ERROR,
-
-    /**
-     * Rate limit exceeded
-     */
-    RATE_LIMIT,
-
-    /**
-     * Season not found
-     */
-    SEASON_NOT_FOUND,
-
-    /**
-     * Invalid season year
-     */
-    INVALID_SEASON,
-
-    /**
-     * Unexpected error occurred
-     */
-    UNEXPECTED
 }
