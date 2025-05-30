@@ -2,7 +2,7 @@ name: CI/CD
 
 on:
   pull_request:
-    branches: [ develop ]
+    branches: [ develop, main ]
   push:
     branches: [ develop, main ]
 
@@ -14,6 +14,7 @@ env:
   ERGAST_API_BASE_URL: https://api.jolpi.ca/ergast/f1
   ERGAST_API_ENDPOINTS_DRIVER_STANDINGS: /{year}/driverStandings/1.json
   ERGAST_API_ENDPOINTS_RACE_RESULTS: /{year}/results/1.json
+  APK_VERSION: ${{ github.sha }}
 
 jobs:
   # This job determines which paths have changed
@@ -93,6 +94,7 @@ jobs:
     if: needs.changes.outputs.frontend_changed == 'true' || needs.changes.outputs.workflow_changed == 'true'
     permissions:
       contents: read
+      packages: write
 
     steps:
     - name: Checkout repository
@@ -142,9 +144,63 @@ jobs:
           frontend/feature/racewinners/build/outputs/aar/*.aar
         if-no-files-found: error # Fails if no artifacts are found
 
+  publish-android:
+    name: Publish Android Artifacts
+    needs: [build-android]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Download APK artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: android-build-artifacts
+        path: ./artifacts
+
+    - name: Log in to GHCR
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Create APK package
+      run: |
+        # Create a simple Dockerfile for the APK
+        cat << EOF > Dockerfile.apk
+        FROM scratch
+        COPY artifacts/*.apk /app.apk
+        LABEL org.opencontainers.image.title="F1 Champions Android App"
+        LABEL org.opencontainers.image.description="Android APK for F1 Champions application"
+        LABEL org.opencontainers.image.source="${{ github.server_url }}/${{ github.repository }}"
+        LABEL org.opencontainers.image.version="${{ env.APK_VERSION }}"
+        LABEL org.opencontainers.image.created="${{ github.event.repository.updated_at }}"
+        EOF
+
+    - name: Build and push APK image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.apk
+        push: true
+        tags: |
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/app:latest
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/app:${{ env.APK_VERSION }}
+        platforms: linux/amd64
+        labels: |
+          com.f1champions.description=F1 Champions Android App
+          com.f1champions.type=apk
+          com.f1champions.version=${{ env.APK_VERSION }}
+
   deploy-docker:
     name: Build and Push Docker Image
-    needs: [build-and-test-backend]
+    needs: [build-and-test-backend, publish-android]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
