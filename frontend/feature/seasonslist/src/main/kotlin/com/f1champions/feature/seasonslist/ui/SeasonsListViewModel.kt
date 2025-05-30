@@ -2,6 +2,7 @@ package com.f1champions.feature.seasonslist.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.f1champions.core.ui.components.ErrorType
 import com.f1champions.domain.exception.*
 import com.f1champions.domain.usecase.GetSeasonChampionsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel

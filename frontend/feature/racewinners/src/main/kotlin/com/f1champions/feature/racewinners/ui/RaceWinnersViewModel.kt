@@ -2,10 +2,10 @@ package com.f1champions.feature.racewinners.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.f1champions.core.ui.components.ErrorType
 import com.f1champions.domain.exception.*
 import com.f1champions.domain.repository.F1Repository
 import com.f1champions.feature.racewinners.mapper.RaceWinnerMapper
-import com.f1champions.feature.racewinners.model.RaceWinner
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -55,7 +55,7 @@ class RaceWinnersViewModel @Inject constructor(
             } catch (e: F1InvalidSeasonException) {
                 _uiState.update { 
                     RaceWinnersUiState.Error(
-                        errorType = ErrorType.INVALID_SEASON,
+                        errorType = ErrorType.INVALID,
                         message = e.message,
                         canRetry = false
                     )
@@ -63,7 +63,7 @@ class RaceWinnersViewModel @Inject constructor(
             } catch (e: F1SeasonNotFoundException) {
                 _uiState.update { 
                     RaceWinnersUiState.Error(
-                        errorType = ErrorType.SEASON_NOT_FOUND,
+                        errorType = ErrorType.NOT_FOUND,
                         message = e.message,
                         canRetry = false
                     )
