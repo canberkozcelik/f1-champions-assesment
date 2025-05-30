@@ -26,7 +26,8 @@ class RaceWinnerMapper @Inject constructor() {
         winner = Winner(
             fullName = domainModel.winnerName,
             constructor = domainModel.constructorName
-        )
+        ),
+        isSeasonChampionWinner = domainModel.isSeasonChampionWinner
     )
 
     /**
