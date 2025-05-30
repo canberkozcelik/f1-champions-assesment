@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt)
     id("org.jetbrains.kotlin.kapt")
+    id("org.jetbrains.kotlinx.kover")
 }
 
 android {
@@ -111,4 +112,39 @@ dependencies {
     androidTestImplementation(libs.androidx.test.espresso.core)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    // Code coverage
+    kover(project(":data"))
+    kover(project(":domain"))
+    kover(project(":feature:seasonslist"))
+    kover(project(":feature:racewinners"))
+}
+
+kover {
+    reports {
+        filters {
+            excludes {
+                androidGeneratedClasses()
+                classes(
+                    "*.R", "*.R$*", "*.BuildConfig", "*.Manifest", "*.*Manifest",
+                    "*.Hilt_*.class", "*.*_HiltModules*", "*.*_Hilt_*",
+                    "*.*_Factory", "*.*_MembersInjector", "*.*_Provide*",
+                    "dagger.hilt.internal.*",
+                )
+                packages(
+                    "com.f1champions.app",
+                    "com.f1champions.**.di",
+                    "com.f1champions.**.**.navigation",
+                    "com.f1champions.**.**.ui.screen",
+                    "dagger.hilt.**",
+                    "hilt**"
+                )
+            }
+        }
+        verify {
+            rule {
+                minBound(70)
+            }
+        }
+    }
 }

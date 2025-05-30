@@ -1,8 +1,8 @@
-package com.f1champions.feature.seasonslist
+package com.f1champions.feature.seasonslist.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
-import com.f1champions.feature.seasonslist.ui.SeasonsListScreen
+import com.f1champions.feature.seasonslist.ui.screen.SeasonsListScreen
 
 /**
  * Entry point for the Seasons List feature.

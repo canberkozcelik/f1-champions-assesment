@@ -24,15 +24,11 @@ class SeasonsListViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<SeasonsListUiState>(SeasonsListUiState.Initial)
     val uiState: StateFlow<SeasonsListUiState> = _uiState.asStateFlow()
 
-    init {
-        loadSeasons()
-    }
-
     /**
      * Loads the list of Formula 1 World Champions.
      * Updates the UI state based on the loading result.
      */
-    private fun loadSeasons() {
+    fun loadSeasons() {
         viewModelScope.launch {
             _uiState.update { SeasonsListUiState.Loading }
             
@@ -68,14 +64,6 @@ class SeasonsListViewModel @Inject constructor(
                     SeasonsListUiState.Error(
                         errorType = ErrorType.UNEXPECTED,
                         message = e.message,
-                        canRetry = true
-                    )
-                }
-            } catch (e: Exception) {
-                _uiState.update { 
-                    SeasonsListUiState.Error(
-                        errorType = ErrorType.UNEXPECTED,
-                        message = "An unexpected error occurred",
                         canRetry = true
                     )
                 }

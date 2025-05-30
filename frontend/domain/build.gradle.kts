@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    id("org.jetbrains.kotlinx.kover")
 }
 
 android {
@@ -45,4 +46,32 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockk)
     testImplementation(libs.cash.turbine)
-} 
+    testImplementation(kotlin("test"))
+}
+
+kover {
+    reports {
+        filters {
+            excludes {
+                androidGeneratedClasses()
+                classes(
+                    "*.R", "*.R$*", "*.BuildConfig", "*.Manifest", "*.*Manifest",
+                    "*.Hilt_*.class", "*.*_HiltModules*", "*.*_Hilt_*",
+                    "*.*_Factory", "*.*_MembersInjector", "*.*_Provide*",
+                    "dagger.hilt.internal.*",
+                )
+                packages(
+                    "com.f1champions.domain.exception",
+                    "com.f1champions.domain.model",
+                    "com.f1champions.domain.repository",
+                    "hilt**",
+                )
+            }
+        }
+        verify {
+            rule {
+                minBound(70)
+            }
+        }
+    }
+}

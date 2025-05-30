@@ -109,6 +109,23 @@ jobs:
       working-directory: ./frontend
       run: chmod +x gradlew
 
+    - name: Run tests and generate coverage reports
+      working-directory: ./frontend
+      run: ./gradlew koverHtmlReport
+      # This step will fail if any tests fail or if coverage requirements are not met
+
+    - name: Upload test coverage reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-coverage-reports
+        path: |
+          frontend/app/build/reports/kover/html/
+          frontend/core/build/reports/kover/html/
+          frontend/data/build/reports/kover/html/
+          frontend/domain/build/reports/kover/html/
+          frontend/feature/racewinners/build/reports/kover/html/
+        if-no-files-found: error # Fails if no reports are found
+
     - name: Build Android Project
       working-directory: ./frontend
       run: ./gradlew assembleDebug
