@@ -1,12 +1,29 @@
 package com.f1champions.feature.racewinners.ui.screen
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -14,12 +31,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.f1champions.core.ui.components.ErrorContent
+import com.f1champions.core.ui.components.LoadingIndicator
 import com.f1champions.feature.racewinners.R
 import com.f1champions.feature.racewinners.model.RaceWinner
-import com.f1champions.feature.racewinners.ui.ErrorType
 import com.f1champions.feature.racewinners.ui.RaceWinnersUiState
 import com.f1champions.feature.racewinners.ui.RaceWinnersViewModel
 
@@ -81,16 +98,6 @@ fun RaceWinnersScreen(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun LoadingIndicator() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        CircularProgressIndicator()
     }
 }
 
@@ -162,63 +169,6 @@ private fun RaceWinnerCard(
                 ),
                 style = MaterialTheme.typography.bodyMedium
             )
-        }
-    }
-}
-
-@Composable
-private fun ErrorContent(
-    errorType: ErrorType,
-    message: String,
-    canRetry: Boolean,
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = when (errorType) {
-                ErrorType.OFFLINE -> Icons.Default.CloudOff
-                ErrorType.TIMEOUT -> Icons.Default.Timer
-                ErrorType.SERVER_ERROR -> Icons.Default.Error
-                ErrorType.RATE_LIMIT -> Icons.Default.Timer
-                ErrorType.SEASON_NOT_FOUND -> Icons.Default.Info
-                ErrorType.INVALID_SEASON -> Icons.Default.Info
-                ErrorType.UNEXPECTED -> Icons.Default.Error
-            },
-            contentDescription = null,
-            modifier = Modifier.size(48.dp),
-            tint = MaterialTheme.colorScheme.error
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-
-        if (canRetry) {
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = onRetry,
-                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Retry")
-            }
         }
     }
 } 

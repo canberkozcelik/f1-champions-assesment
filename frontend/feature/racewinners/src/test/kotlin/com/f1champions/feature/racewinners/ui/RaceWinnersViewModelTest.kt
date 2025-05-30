@@ -1,6 +1,7 @@
 package com.f1champions.feature.racewinners.ui
 
 import app.cash.turbine.test
+import com.f1champions.core.ui.components.ErrorType
 import com.f1champions.domain.exception.*
 import com.f1champions.domain.model.RaceWinnerInfo
 import com.f1champions.domain.repository.F1Repository
@@ -151,7 +152,7 @@ class RaceWinnersViewModelTest {
             viewModel.uiState.test {
                 assertEquals(RaceWinnersUiState.Loading, awaitItem())
                 val errorState = awaitItem() as RaceWinnersUiState.Error
-                assertEquals(ErrorType.INVALID_SEASON, errorState.errorType)
+                assertEquals(ErrorType.INVALID, errorState.errorType)
                 assertEquals(false, errorState.canRetry)
             }
         }
@@ -170,7 +171,7 @@ class RaceWinnersViewModelTest {
             viewModel.uiState.test {
                 assertEquals(RaceWinnersUiState.Loading, awaitItem())
                 val errorState = awaitItem() as RaceWinnersUiState.Error
-                assertEquals(ErrorType.SEASON_NOT_FOUND, errorState.errorType)
+                assertEquals(ErrorType.NOT_FOUND, errorState.errorType)
                 assertEquals(false, errorState.canRetry)
             }
         }

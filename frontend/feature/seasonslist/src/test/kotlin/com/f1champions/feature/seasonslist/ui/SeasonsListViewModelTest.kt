@@ -1,6 +1,7 @@
 package com.f1champions.feature.seasonslist.ui
 
 import app.cash.turbine.test
+import com.f1champions.core.ui.components.ErrorType
 import com.f1champions.domain.exception.*
 import com.f1champions.domain.model.SeasonChampionInfo
 import com.f1champions.domain.usecase.GetSeasonChampionsUseCase

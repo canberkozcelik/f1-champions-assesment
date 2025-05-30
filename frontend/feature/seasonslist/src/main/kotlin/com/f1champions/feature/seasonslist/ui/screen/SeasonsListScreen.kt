@@ -19,8 +19,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.f1champions.core.ui.components.ErrorContent
+import com.f1champions.core.ui.components.ErrorType
+import com.f1champions.core.ui.components.LoadingIndicator
 import com.f1champions.domain.model.SeasonChampionInfo
-import com.f1champions.feature.seasonslist.ui.ErrorType
 import com.f1champions.feature.seasonslist.ui.SeasonsListUiState
 import com.f1champions.feature.seasonslist.ui.SeasonsListViewModel
 
@@ -131,66 +133,3 @@ private fun SeasonItem(
         }
     }
 }
-
-@Composable
-private fun LoadingIndicator() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        CircularProgressIndicator()
-    }
-}
-
-@Composable
-private fun ErrorContent(
-    errorType: ErrorType,
-    message: String,
-    canRetry: Boolean,
-    onRetry: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        // Error icon based on error type
-        Icon(
-            imageVector = when (errorType) {
-                ErrorType.OFFLINE -> Icons.Default.CloudOff
-                ErrorType.TIMEOUT -> Icons.Default.Timer
-                else -> Icons.Default.Error
-            },
-            contentDescription = null,
-            modifier = Modifier.size(48.dp),
-            tint = MaterialTheme.colorScheme.error
-        )
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.error
-        )
-        
-        if (canRetry) {
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = onRetry,
-                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Retry")
-            }
-        }
-    }
-} 
