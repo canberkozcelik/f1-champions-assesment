@@ -111,7 +111,7 @@ jobs:
 
     - name: Run tests and generate coverage reports
       working-directory: ./frontend
-      run: ./gradlew koverHtmlReport
+      run: ./gradlew clean koverHtmlReport
       # This step will fail if any tests fail or if coverage requirements are not met
 
     - name: Upload test coverage reports
