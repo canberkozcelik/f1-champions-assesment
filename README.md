@@ -15,7 +15,19 @@ f1-champions-assesment/
 │   ├── gradlew               # Gradle wrapper script (Unix)
 │   ├── gradlew.bat           # Gradle wrapper script (Windows)
 │   └── .editorconfig         # Code style configuration
-├── frontend/                  # Frontend application (to be implemented)
+├── frontend/                  # Android application
+│   ├── app/                  # Main application module
+│   ├── core/                 # Core utilities and common components
+│   ├── data/                 # Data layer (repositories, API clients)
+│   ├── domain/              # Domain layer (use cases, models)
+│   ├── feature/             # Feature modules
+│   │   └── seasonslist/     # Seasons list feature module
+│   │   └── racewinners/     # Race winners feature module
+│   ├── build.gradle.kts     # Root Gradle build configuration
+│   ├── gradle/              # Gradle wrapper files
+│   ├── gradlew             # Gradle wrapper script (Unix)
+│   ├── gradlew.bat         # Gradle wrapper script (Windows)
+│   └── settings.gradle.kts  # Gradle settings
 ├── infrastructure/           # Infrastructure and deployment
 │   ├── Dockerfile           # Backend service Dockerfile
 │   ├── docker-compose.yml   # Docker Compose configuration
@@ -33,6 +45,8 @@ f1-champions-assesment/
 - JDK 17 (for local development)
 - Gradle (for local development)
 - OpenSSL (for secret generation)
+- Android Studio (for frontend development)
+- Android SDK (API level 34+)
 
 ## Quick Start
 
@@ -116,4 +130,100 @@ The API is documented using OpenAPI/Swagger. Access the documentation at:
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. 
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+### Frontend Development
+
+The frontend is an Android application written in Kotlin using modern Android development practices:
+
+#### Architecture
+- Clean Architecture with separate data, domain, and presentation layers
+- MVVM pattern for UI components
+- Dependency Injection using Hilt
+- Jetpack Compose for UI
+- Kotlin Coroutines for asynchronous operations
+- Kover for code coverage reporting
+
+#### Project Structure
+- `app/`: Main application module
+  - Contains the application class and main activity
+  - Implements the navigation graph
+  - Provides dependency injection setup
+
+- `core/`: Core utilities and common components
+  - Common UI components
+  - Utility functions
+  - Extension functions
+
+- `data/`: Data layer
+  - Repository implementations
+  - API clients
+  - Data mappers
+  - Remote data sources
+
+- `domain/`: Domain layer
+  - Use cases
+  - Domain models
+  - Repository interfaces
+  - Domain exceptions
+
+- `feature/`: Feature modules
+  - Each feature is a separate module
+  - Currently includes:
+    - `seasonslist/`: Displays seasons list with the champsions of that year  
+    - `racewinners/`: Displays race winners for a season
+
+#### Building and Testing
+
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+
+2. Build the project:
+   ```bash
+   ./gradlew build
+   ```
+
+3. Run tests:
+   ```bash
+   ./gradlew test
+   ```
+
+4. Generate coverage reports:
+   ```bash
+   ./gradlew koverHtmlReport
+   ```
+
+#### Development Guidelines
+
+1. **Code Style**
+   - Follow Kotlin style guide
+   - Use ktlint for code formatting
+   - Follow Material Design guidelines for UI
+
+2. **Testing**
+   - Write unit tests for all business logic
+   - Use MockK for mocking
+   - Maintain minimum 70% code coverage
+   - Test both success and error cases
+
+3. **Architecture**
+   - Keep features modular and independent
+   - Use dependency injection for better testability
+   - Follow clean architecture principles
+   - Keep UI and business logic separate
+
+4. **UI/UX**
+   - Use Jetpack Compose for all new UI
+   - Follow Material Design 3 guidelines
+   - Support dark/light themes
+   - Handle configuration changes properly
+
+#### CI/CD
+
+The frontend is integrated into the CI/CD pipeline:
+- Automated builds on pull requests and pushes to develop/main
+- Unit tests run on every build
+- Code coverage reports generated and uploaded as artifacts
+- Build artifacts (APK/AAR) uploaded for each successful build 
