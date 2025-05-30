@@ -121,17 +121,37 @@ private fun RaceWinnerCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (raceWinner.isSeasonChampionWinner) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surface
+            }
+        )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            Text(
-                text = raceWinner.raceName,
-                style = MaterialTheme.typography.titleMedium
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = raceWinner.raceName,
+                    style = MaterialTheme.typography.titleMedium
+                )
+                if (raceWinner.isSeasonChampionWinner) {
+                    Icon(
+                        imageVector = Icons.Default.EmojiEvents,
+                        contentDescription = "Season Champion",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = raceWinner.date,
@@ -141,7 +161,7 @@ private fun RaceWinnerCard(
             Text(
                 text = stringResource(
                     R.string.winner_format,
-                    raceWinner.winner,
+                    raceWinner.winner.fullName,
                     raceWinner.winner.constructor
                 ),
                 style = MaterialTheme.typography.bodyMedium
