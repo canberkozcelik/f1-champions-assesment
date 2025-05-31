@@ -53,7 +53,7 @@ jobs:
     if: github.event.pull_request.merged == true  # Only run if PR was merged
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write  # Need this to create releases
       packages: write
       actions: read  # Need this to download artifacts from other workflows
 
