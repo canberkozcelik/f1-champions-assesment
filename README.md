@@ -176,109 +176,123 @@ Why does linter have different configuration for test files?
 
 ### Base URL  
 
-https://api.jolpi.ca/ergast/f1  
+http://localhost:8080/api/seasons  
 
 ### Endpoints
 
-#### 1. Get Driver Standings  
+#### 1. Get All Seasons  
 
-GET /{year}/driverStandings/1.json  
+GET /api/seasons  
 
-Response:
+
+Retrieves a list of all Formula 1 seasons with their champions. Only seasons from 2005 onwards are available.
+
+**Response:**
 ```json
-{
-  "MRData": {
-    "StandingsTable": {
-      "season": "2023",
-      "StandingsLists": [{
-        "season": "2023",
-        "round": "22",
-        "DriverStandings": [{
-          "position": "1",
-          "points": "575",
-          "wins": "19",
-          "Driver": {
-            "driverId": "max_verstappen",
-            "permanentNumber": "1",
-            "code": "VER",
-            "url": "http://en.wikipedia.org/wiki/Max_Verstappen",
-            "givenName": "Max",
-            "familyName": "Verstappen",
-            "dateOfBirth": "1997-09-30",
-            "nationality": "Dutch"
-          },
-          "Constructors": [{
-            "constructorId": "red_bull",
-            "url": "http://en.wikipedia.org/wiki/Red_Bull_Racing",
-            "name": "Red Bull",
-            "nationality": "Austrian"
-          }]
-        }]
-      }]
-    }
+[
+  {
+    "year": 2023,
+    "championName": "Max Verstappen",
+    "championPoints": 454,
+    "championWins": 19
+  },
+  {
+    "year": 2022,
+    "championName": "Max Verstappen",
+    "championPoints": 454,
+    "championWins": 15
   }
-}
+  // ... more seasons
+]
 ```
 
-#### 2. Get Race Results  
+**Response Fields:**
+- `year` (integer): The year of the F1 season (2005-present)
+- `championName` (string): Full name of the season champion
+- `championPoints` (integer): Total points scored by the champion
+- `championWins` (integer): Number of race wins achieved by the champion
 
-GET /{year}/results/1.json  
-
-
-Response:
-```json
-{
-  "MRData": {
-    "RaceTable": {
-      "season": "2023",
-      "Races": [{
-        "season": "2023",
-        "round": "1",
-        "raceName": "Bahrain Grand Prix",
-        "Results": [{
-          "number": "1",
-          "position": "1",
-          "points": "25",
-          "Driver": {
-            "driverId": "max_verstappen",
-            "permanentNumber": "1",
-            "code": "VER",
-            "url": "http://en.wikipedia.org/wiki/Max_Verstappen",
-            "givenName": "Max",
-            "familyName": "Verstappen",
-            "dateOfBirth": "1997-09-30",
-            "nationality": "Dutch"
-          },
-          "Constructor": {
-            "constructorId": "red_bull",
-            "url": "http://en.wikipedia.org/wiki/Red_Bull_Racing",
-            "name": "Red Bull",
-            "nationality": "Austrian"
-          },
-          "grid": "1",
-          "laps": "57",
-          "status": "Finished",
-          "Time": {
-            "millis": "5636736",
-            "time": "1:33:56.736"
-          },
-          "FastestLap": {
-            "rank": "2",
-            "lap": "44",
-            "Time": {
-              "time": "1:35.762"
-            },
-            "AverageSpeed": {
-              "units": "kph",
-              "speed": "205.191"
-            }
-          }
-        }]
-      }]
-    }
+**Error Responses:**
+- `500 Internal Server Error`: If there's an error fetching season data
+  ```json
+  {
+    "status": 500,
+    "error": "Internal Server Error",
+    "message": "An error occurred while fetching season data"
   }
-}
+  ```
+
+#### 2. Get Races for a Season
+
+GET /api/seasons/{year}/races  
+
+Retrieves all races and their winners for a given Formula 1 season. The year must be between 2005 and the current year.
+
+**Path Parameters:**
+- `year` (integer): The year of the F1 season (2005-present)
+
+**Response:**
+```json
+[
+  {
+    "round": 1,
+    "raceName": "Bahrain Grand Prix",
+    "date": "2023-03-05",
+    "circuitName": "Bahrain International Circuit",
+    "winningDriverName": "Max Verstappen",
+    "winningDriverNationality": "Dutch",
+    "winningConstructorName": "Red Bull",
+    "isSeasonChampionWinner": true
+  },
+  // ... more races
+]
 ```
+
+**Response Fields:**
+- `round` (integer): Race round number in the season (1-24)
+- `raceName` (string): Official name of the race
+- `date` (string): Race date in ISO-8601 format (YYYY-MM-DD)
+- `circuitName` (string): Official name of the circuit
+- `winningDriverName` (string): Full name of the race winner
+- `winningDriverNationality` (string): Nationality of the race winner
+- `winningConstructorName` (string): Name of the winning constructor (team)
+- `isSeasonChampionWinner` (boolean): Indicates if the race winner is also the season champion
+
+**Error Responses:**
+- `400 Bad Request`: If the year is invalid
+  ```json
+  {
+    "status": 400,
+    "error": "Bad Request",
+    "message": "Invalid year: 2004. Must be between 2005 and current year."
+  }
+  ```
+- `404 Not Found`: If season data is not found
+  ```json
+  {
+    "status": 404,
+    "error": "Not Found",
+    "message": "Season data for year 2023 not found. Please ensure season data is populated first."
+  }
+  ```
+- `500 Internal Server Error`: If there's an error processing the request
+  ```json
+  {
+    "status": 500,
+    "error": "Internal Server Error",
+    "message": "An error occurred while processing the request"
+  }
+  ```
+
+### Rate Limiting
+The API implements rate limiting to comply with the Ergast API's limits:
+- 4 calls per second
+- 200 calls per hour
+
+When rate limits are exceeded, the API will return a `429 Too Many Requests` response with a `Retry-After` header indicating when to retry.
+
+### Data Source
+This API uses the Ergast API (http://ergast.com/mrd/) as its data source. All F1 data is provided through their public API and cached in a PostgreSQL database for improved performance and reliability.  
 
 ## CI/CD Pipeline
 
