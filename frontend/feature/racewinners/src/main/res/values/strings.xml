@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Screen titles -->
+    <string name="race_winners_title">%d Season Race Winners</string>
+    
+    <!-- Navigation -->
+    <string name="back_button">Back</string>
+    
+    <!-- Race winner display -->
+    <string name="winner_format">%1$s - %2$s</string>
+</resources> 

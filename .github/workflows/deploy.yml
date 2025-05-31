@@ -1,0 +1,139 @@
+name: Deploy
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [closed]  # Only run on PR close
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  DOCKER_BUILD_MEMORY: 1G
+  DOCKER_BUILD_CPU: 1.0
+  ERGAST_API_BASE_URL: https://api.jolpi.ca/ergast/f1
+  ERGAST_API_ENDPOINTS_DRIVER_STANDINGS: /{year}/driverStandings/1.json
+  ERGAST_API_ENDPOINTS_RACE_RESULTS: /{year}/results/1.json
+  APK_VERSION: ${{ github.sha }}
+
+jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true  # Only run if PR was merged
+    outputs:
+      backend_changed: ${{ steps.changed-files-backend.outputs.any_changed }}
+      frontend_changed: ${{ steps.changed-files-frontend.outputs.any_changed }}
+      workflow_changed: ${{ steps.changed-files-workflow.outputs.any_changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed backend files
+        id: changed-files-backend
+        uses: tj-actions/changed-files@v44
+        with:
+          files: backend/**
+
+      - name: Get changed frontend files
+        id: changed-files-frontend
+        uses: tj-actions/changed-files@v44
+        with:
+          files: frontend/**
+
+      - name: Get changed workflow files
+        id: changed-files-workflow
+        uses: tj-actions/changed-files@v44
+        with:
+          files: .github/workflows/**
+
+  publish-and-deploy:
+    name: Publish Artifacts and Deploy
+    needs: changes
+    if: github.event.pull_request.merged == true  # Only run if PR was merged
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      with:
+        platforms: linux/amd64
+
+    - name: Log in to GHCR
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    # Always publish APK
+    - name: Download APK artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: android-build-artifacts
+        path: ./artifacts
+
+    - name: Create and publish APK image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.apk
+        push: true
+        tags: |
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/app:latest
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/app:${{ env.APK_VERSION }}
+        platforms: linux/amd64
+        labels: |
+          com.f1champions.description=F1 Champions Android App
+          com.f1champions.type=apk
+          com.f1champions.version=${{ env.APK_VERSION }}
+
+    # Always deploy backend
+    - name: Setup database credentials
+      run: |
+        mkdir -p infrastructure/secrets
+        chmod 700 infrastructure/secrets
+        echo "${{ secrets.DB_PASSWORD }}" > infrastructure/secrets/db_password.txt
+        chmod 600 infrastructure/secrets/db_password.txt
+        
+        if [ ! -f infrastructure/secrets/db_password.txt ] || [ ! -s infrastructure/secrets/db_password.txt ]; then
+          echo "Error: Failed to create or password file is empty"
+          exit 1
+        fi
+
+    - name: Build and push backend image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./infrastructure/Dockerfile
+        push: true
+        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        platforms: linux/amd64
+        build-args: |
+          DOCKER_BUILDKIT=1
+          ERGAST_API_BASE_URL=${{ env.ERGAST_API_BASE_URL }}
+          ERGAST_API_ENDPOINTS_DRIVER_STANDINGS=${{ env.ERGAST_API_ENDPOINTS_DRIVER_STANDINGS }}
+          ERGAST_API_ENDPOINTS_RACE_RESULTS=${{ env.ERGAST_API_ENDPOINTS_RACE_RESULTS }}
+        cache-from: |
+          type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
+        cache-to: |
+          type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
+        labels: |
+          com.f1champions.description=F1 Champions API
+          com.f1champions.department=Engineering
+          com.f1champions.service=backend
+        memory: ${{ env.DOCKER_BUILD_MEMORY }}
+        cpu: ${{ env.DOCKER_BUILD_CPU }}
+
+    - name: Clean up secrets
+      if: always()
+      run: |
+        if [ -d "infrastructure/secrets" ]; then
+          rm -rf infrastructure/secrets/
+        fi 
