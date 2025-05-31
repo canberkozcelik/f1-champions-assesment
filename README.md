@@ -176,7 +176,7 @@ Why does linter have different configuration for test files?
 
 ### Base URL  
 
-http://localhost:8080/api/seasons  
+http://localhost:8080/api/  
 
 ### Endpoints
 
