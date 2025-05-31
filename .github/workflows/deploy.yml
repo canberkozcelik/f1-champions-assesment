@@ -101,7 +101,7 @@ jobs:
         echo "Listing contents of artifacts directory:"
         ls -R ./artifacts
         
-        APK_DIR="./artifacts/frontend/app/build/outputs/apk/dev/debug"
+        APK_DIR="./artifacts/app/build/outputs/apk/dev/debug"
         if [ ! -d "$APK_DIR" ]; then
           echo "Error: APK directory not found at $APK_DIR"
           exit 1
