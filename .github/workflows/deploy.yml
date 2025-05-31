@@ -96,18 +96,12 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
         if-no-files-found: error
 
-    - name: Extract artifacts
-      run: |
-        echo "Extracting downloaded artifacts..."
-        cd artifacts
-        unzip -o android-build-artifacts.zip
-        cd ..
-        echo "Listing contents after extraction:"
-        ls -R ./artifacts
-
     - name: Verify APK artifacts
       run: |
-        APK_DIR="./artifacts/frontend/app/build/outputs/apk/debug"
+        echo "Listing contents of artifacts directory:"
+        ls -R ./artifacts
+        
+        APK_DIR="./artifacts/frontend/app/build/outputs/apk/dev/debug"
         if [ ! -d "$APK_DIR" ]; then
           echo "Error: APK directory not found at $APK_DIR"
           exit 1
