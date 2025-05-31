@@ -8,7 +8,8 @@ A Spring Boot application that fetches and displays F1 World Champions data usin
 f1-champions-assesment/
 ├── .github/                    # GitHub Actions workflows
 │   └── workflows/
-│       └── main.yml           # CI/CD pipeline configuration
+│       └── pr-validation.yml           # CI/CD pipeline PR validation
+│       └── deploy.yml           # CI/CD pipeline deployment
 ├── backend/                    # Spring Boot application
 │   ├── src/                   # Source code
 │   ├── build.gradle.kts       # Gradle build configuration
