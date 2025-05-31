@@ -87,6 +87,23 @@ A mobile application that displays F1 champions and race winners, with a backend
      - Pros: Simple distribution, version tracking
      - Cons: Manual installation required
 
+## Developer Notes  
+# Backend  
+
+Hybrid Approach for the Backend:  
+- Seasons/Champions Data: You opted to pre-load this data when the backend application starts (using the DataInitializer and its @PostConstruct method calling f1DataService.ensureSeasonsDataPopulated()). This was a trade-off to ensure the frontend's initial screen (displaying the list of seasons and champions via GET /api/seasons) loads quickly for a better user experience, at the cost of a slightly longer backend startup time.  
+- Races/Winners Data (for a specific season): This data would be fetched from the Ergast API "on the first request" for that specific season's races (via GET /api/seasons/{year}/races), if not already present in your database. For race data, fetching on demand was deemed simpler to implement initially and avoided an even longer backend startup if all races for all seasons were pre-fetched.  
+
+Retry utility written in pure Kotlin for coroutines:  
+Why can’t use Spring Boot’s @Retryable annotation directly? Using Spring Retry's @Retryable annotation directly on a suspend function or a function that internally uses coroutines in a non-blocking way can be problematic and might not behave as expected without careful consideration or specific integration.  
+
+Why does linter have different configuration for test files?
+1. Test files often have long setup code that's more readable in a single line
+2. Test data structures are often more readable when kept together
+3. The focus in test files is on readability and maintainability, not strict formatting
+Implemented retry and backoff mechanism because of the looped Ergast API requests.  
+
+
 ## Local Development
 
 ### Prerequisites
