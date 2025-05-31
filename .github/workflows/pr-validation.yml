@@ -140,7 +140,7 @@ jobs:
       with:
         name: android-build-artifacts
         path: |
-          frontend/app/build/outputs/apk/debug/*.apk
+          frontend/app/build/outputs/apk/dev/debug/*.apk
           frontend/core/build/outputs/aar/*.aar
           frontend/data/build/outputs/aar/*.aar
           frontend/domain/build/outputs/aar/*.aar
