@@ -88,7 +88,7 @@ A mobile application that displays F1 champions and race winners, with a backend
      - Cons: Manual installation required
 
 ## Developer Notes  
-# Backend  
+### Backend  
 
 Hybrid Approach for the Backend:  
 - Seasons/Champions Data: You opted to pre-load this data when the backend application starts (using the DataInitializer and its @PostConstruct method calling f1DataService.ensureSeasonsDataPopulated()). This was a trade-off to ensure the frontend's initial screen (displaying the list of seasons and champions via GET /api/seasons) loads quickly for a better user experience, at the cost of a slightly longer backend startup time.  
