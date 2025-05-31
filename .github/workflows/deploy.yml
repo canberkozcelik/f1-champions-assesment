@@ -62,14 +62,39 @@ jobs:
       uses: actions/checkout@v4
 
     # Download artifacts from the PR validation workflow
+    - name: Find PR validation workflow run
+      id: find-workflow
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { data: runs } = await github.rest.actions.listWorkflowRuns({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            workflow_id: 'pr-validation.yml',
+            branch: context.payload.pull_request.head.ref,
+            status: 'completed',
+            conclusion: 'success',
+            per_page: 1
+          });
+          
+          if (runs.total_count === 0) {
+            core.setFailed('No successful PR validation workflow run found');
+            return;
+          }
+          
+          const run = runs.workflow_runs[0];
+          core.setOutput('run_id', run.id);
+          console.log(`Found workflow run: ${run.id} from ${run.head_sha}`);
+
     - name: Download Android artifacts from PR
       uses: dawidd6/action-download-artifact@v2
       with:
         workflow: pr-validation.yml
-        run_id: ${{ github.event.pull_request.head.sha }}  # Use the PR's head commit
+        run_id: ${{ steps.find-workflow.outputs.run_id }}
         name: android-build-artifacts
         path: ./artifacts
         token: ${{ secrets.GITHUB_TOKEN }}
+        if-no-files-found: error  # Fail if artifacts not found
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
