@@ -95,13 +95,12 @@ Hybrid Approach for the Backend:
 - Races/Winners Data (for a specific season): This data would be fetched from the Ergast API "on the first request" for that specific season's races (via GET /api/seasons/{year}/races), if not already present in your database. For race data, fetching on demand was deemed simpler to implement initially and avoided an even longer backend startup if all races for all seasons were pre-fetched.  
 
 Retry utility written in pure Kotlin for coroutines:  
-Why can’t use Spring Boot’s @Retryable annotation directly? Using Spring Retry's @Retryable annotation directly on a suspend function or a function that internally uses coroutines in a non-blocking way can be problematic and might not behave as expected without careful consideration or specific integration.  
+Implemented retry and backoff mechanism because of the looped Ergast API requests. Why can’t use Spring Boot’s @Retryable annotation directly? Using Spring Retry's @Retryable annotation directly on a suspend function or a function that internally uses coroutines in a non-blocking way can be problematic and might not behave as expected without careful consideration or specific integration.  
 
 Why does linter have different configuration for test files?
 1. Test files often have long setup code that's more readable in a single line
 2. Test data structures are often more readable when kept together
-3. The focus in test files is on readability and maintainability, not strict formatting
-Implemented retry and backoff mechanism because of the looped Ergast API requests.  
+3. The focus in test files is on readability and maintainability, not strict formatting.  
 
 
 ## Local Development
