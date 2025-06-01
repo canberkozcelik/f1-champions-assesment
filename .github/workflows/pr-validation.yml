@@ -94,8 +94,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: changes
     if: |
-      (needs.changes.outputs.frontend_changed == 'true' || 
-       needs.changes.outputs.workflow_changed == 'true')
+      github.base_ref == 'main' ||  # Always build when targeting main
+      needs.changes.outputs.frontend_changed == 'true' || 
+      needs.changes.outputs.workflow_changed == 'true'
     permissions:
       contents: read
       packages: write
