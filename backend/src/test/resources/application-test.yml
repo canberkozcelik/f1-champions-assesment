@@ -1,0 +1,52 @@
+spring:
+  application:
+    name: f1-champions-assessment-test
+  cache:
+    type: redis
+  redis:
+    database: 0
+    timeout: 2000ms
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+# Ergast API Configuration
+ergast:
+  api:
+    base-url: http://ergast.com/api/f1
+    rate-limit:
+      requests-per-second: 4
+      burst-size: 4
+    timeout:
+      connection: 5000
+      read: 5000
+
+# Resilience4j Configuration
+resilience4j:
+  ratelimiter:
+    instances:
+      ergast-api:
+        limitForPeriod: 4
+        limitRefreshPeriod: 1s
+        timeoutDuration: 0s
+        registerHealthIndicator: true
+        eventConsumerBufferSize: 100
+  retry:
+    instances:
+      ergast-api:
+        maxAttempts: 3
+        waitDuration: 1s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        registerHealthIndicator: true
+        eventConsumerBufferSize: 100

@@ -14,6 +14,8 @@ import com.f1champions.service.F1DataService
 import com.f1champions.service.RateLimiterService
 import com.f1champions.util.RetryUtil
 import org.slf4j.LoggerFactory
+import org.springframework.cache.annotation.CacheEvict
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 import java.time.Year
@@ -39,6 +41,7 @@ class F1DataServiceImpl(
         }
     }
 
+    @CacheEvict(value = ["seasons", "races"], allEntries = true)
     override suspend fun ensureSeasonsDataPopulated(): Boolean {
         val currentYear = Year.now().value
         val existingSeasons = seasonRepository.findAll().map { it.year }.toSet()
@@ -95,12 +98,18 @@ class F1DataServiceImpl(
         return dataFetched
     }
 
+    @Cacheable(value = ["seasons"], key = "'all'")
     override suspend fun getAllSeasons(): List<SeasonDto> {
-        return seasonRepository.findAllByOrderByYearAsc()
+        logger.info("Cache missing for seasons. Fetching from database...")
+        val seasons = seasonRepository.findAllByOrderByYearAsc()
             .map { it.toDto() }
+        logger.info("Fetched ${seasons.size} seasons from database")
+        return seasons
     }
 
+    @Cacheable(value = ["races"], key = "#year")
     override suspend fun getRacesForSeason(year: Int): List<RaceDto> {
+        logger.info("Cache missing for races of year $year. Fetching from database...")
         // Validate year
         if (year < 2005 || year > Year.now().value) {
             throw IllegalArgumentException("Invalid year: $year. Must be between 2005 and current year.")
@@ -116,6 +125,7 @@ class F1DataServiceImpl(
         // Check if races exist for this season
         val existingRaces = raceRepository.findBySeasonYearOrderByRoundAsc(year)
         if (existingRaces.isNotEmpty()) {
+            logger.info("Found ${existingRaces.size} races in database for year $year")
             return existingRaces.map { it.toDto() }
         }
 

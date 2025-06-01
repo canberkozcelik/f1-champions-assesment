@@ -25,7 +25,7 @@ RUN ./gradlew dependencies --no-daemon
 COPY --chown=builduser:builduser backend/src ./src
 
 # Build the application
-RUN ./gradlew build --no-daemon
+RUN ./gradlew build --no-daemon --info
 
 # Copy the entrypoint script and make it executable
 COPY --chown=builduser:builduser backend/src/main/docker/entrypoint.sh /app/entrypoint.sh

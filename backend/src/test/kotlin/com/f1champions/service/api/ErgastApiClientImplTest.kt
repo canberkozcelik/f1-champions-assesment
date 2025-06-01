@@ -1,4 +1,4 @@
-package com.f1champions.service
+package com.f1champions.service.api
 
 import com.f1champions.client.ergast.common.ErgastCircuitDto
 import com.f1champions.client.ergast.common.ErgastConstructorDto
@@ -33,7 +33,7 @@ import reactor.core.publisher.Mono
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
-class ErgastApiClientTest {
+class ErgastApiClientImplTest {
 
     private lateinit var webClient: WebClient
     private lateinit var ergastApiClient: ErgastApiClientImpl

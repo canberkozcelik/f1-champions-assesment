@@ -38,13 +38,20 @@ services:
       - ERGAST_API_ENDPOINTS_RACE_RESULTS=/{year}/results/1.json
       - SPRING_JPA_HIBERNATE_DDL_AUTO=create
       - SPRING_JPA_SHOW_SQL=${SPRING_JPA_SHOW_SQL:-false}
-      # Add debug logging
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+      - SPRING_REDIS_PASSWORD_FILE=/run/secrets/redis_password
+      - SPRING_CACHE_TYPE=redis
       - SPRING_LOG_LEVEL_ORG_POSTGRESQL=DEBUG
       - SPRING_LOG_LEVEL_COM_ZAXXER_HIKARI=DEBUG
+      - SPRING_LOG_LEVEL_ORG_SPRINGFRAMEWORK_CACHE=DEBUG
     command: java -jar /app/app.jar
     secrets:
       - source: db_password
         target: /run/secrets/db_password
+        mode: 0400
+      - source: redis_password
+        target: /run/secrets/redis_password
         mode: 0400
     depends_on:
       postgres:
@@ -69,6 +76,42 @@ services:
       - "com.example.description=F1 Champions API"
       - "com.example.department=Engineering"
       - "com.example.service=backend"
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: f1_redis
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass-file /run/secrets/redis_password --appendonly yes
+    secrets:
+      - source: redis_password
+        target: /run/secrets/redis_password
+        mode: 0400
+    volumes:
+      - type: volume
+        source: redis_data
+        target: /data
+        volume:
+          nocopy: true
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - f1-network
+    restart: unless-stopped
+    <<: *default-config
+    security_opt:
+      - no-new-privileges:true
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    labels:
+      - "com.example.description=F1 Champions Redis Cache"
+      - "com.example.department=Engineering"
+      - "com.example.service=cache"
 
   postgres:
     image: postgres:15-alpine
@@ -136,10 +179,21 @@ volumes:
     labels:
       - "com.f1champions.description=F1 Champions Database Volume"
       - "com.f1champions.department=Engineering"
+  redis_data:
+    name: f1_redis_data
+    driver: local
+    labels:
+      - "com.f1champions.description=F1 Champions Redis Cache Volume"
+      - "com.f1champions.department=Engineering"
 
 secrets:
   db_password:
     file: ./secrets/db_password.txt
     labels:
       - "com.f1champions.description=Database Password"
+      - "com.f1champions.department=Engineering"
+  redis_password:
+    file: ./secrets/redis_password.txt
+    labels:
+      - "com.f1champions.description=Redis Password"
       - "com.f1champions.department=Engineering"

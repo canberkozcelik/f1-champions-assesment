@@ -59,42 +59,58 @@ log_success "Secrets directory ready"
 
 # 3. Clean up any existing password files
 if [ -f "../secrets/db_password.txt" ]; then
-    log_warning "Removing existing password file..."
+    log_warning "Removing existing database password file..."
     rm -f ../secrets/db_password.txt
 fi
 
-# 4. Generate new password
+if [ -f "../secrets/redis_password.txt" ]; then
+    log_warning "Removing existing Redis password file..."
+    rm -f ../secrets/redis_password.txt
+fi
+
+# 4. Generate new passwords
 log_info "Generating secure database password..."
 if ! printf "%s" "$(openssl rand -base64 32)" > ../secrets/db_password.txt; then
-    log_error "Failed to generate password"
+    log_error "Failed to generate database password"
     exit 1
 fi
-log_success "Generated new password"
+log_success "Generated new database password"
 
-# 5. Verify password file
-log_info "Verifying password file..."
-if [ ! -f "../secrets/db_password.txt" ]; then
-    log_error "Password file was not created"
+log_info "Generating secure Redis password..."
+if ! printf "%s" "$(openssl rand -base64 32)" > ../secrets/redis_password.txt; then
+    log_error "Failed to generate Redis password"
     exit 1
 fi
+log_success "Generated new Redis password"
 
-if [ ! -s "../secrets/db_password.txt" ]; then
-    log_error "Password file is empty"
-    exit 1
-fi
+# 5. Verify password files
+log_info "Verifying password files..."
+for password_file in "../secrets/db_password.txt" "../secrets/redis_password.txt"; do
+    if [ ! -f "$password_file" ]; then
+        log_error "Password file $password_file was not created"
+        exit 1
+    fi
 
-PASSWORD_LENGTH=$(wc -c < ../secrets/db_password.txt)
-if [ "$PASSWORD_LENGTH" -lt 32 ]; then
-    log_error "Password is too short (${PASSWORD_LENGTH} bytes)"
-    exit 1
-fi
+    if [ ! -s "$password_file" ]; then
+        log_error "Password file $password_file is empty"
+        exit 1
+    fi
+
+    PASSWORD_LENGTH=$(wc -c < "$password_file")
+    if [ "$PASSWORD_LENGTH" -lt 32 ]; then
+        log_error "Password in $password_file is too short (${PASSWORD_LENGTH} bytes)"
+        exit 1
+    fi
+done
 
 # 6. Set proper permissions
 log_info "Setting file permissions..."
-if ! chmod 600 ../secrets/db_password.txt; then
-    log_error "Failed to set file permissions"
-    exit 1
-fi
+for password_file in "../secrets/db_password.txt" "../secrets/redis_password.txt"; do
+    if ! chmod 600 "$password_file"; then
+        log_error "Failed to set file permissions for $password_file"
+        exit 1
+    fi
+done
 log_success "File permissions set"
 
 # Print success message and next steps

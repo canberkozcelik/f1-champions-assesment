@@ -41,18 +41,6 @@ dependencies {
     runtimeOnly("com.h2database:h2")
     implementation("org.postgresql:postgresql:42.6.1")
 
-    // API Documentation
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0")
-
-    // Testing
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
-    testImplementation("io.mockk:mockk:1.13.9")
-    testImplementation("com.ninja-squad:springmockk:4.0.2")
-    testImplementation("org.jetbrains.kotlin:kotlin-test")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-    testImplementation("org.postgresql:postgresql:42.6.1")
-
     // Resilience4j
     implementation("io.github.resilience4j:resilience4j-ratelimiter:2.1.0")
     implementation("io.github.resilience4j:resilience4j-spring-boot3:2.1.0")
@@ -60,8 +48,23 @@ dependencies {
     implementation("io.github.resilience4j:resilience4j-reactor:2.1.0")
     implementation("io.github.resilience4j:resilience4j-micrometer:2.1.0")
 
-    // Test dependencies
+    // Redis
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation("org.springframework.boot:spring-boot-starter-cache")
+
+    // API Documentation
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0")
+
+    // Testing
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.testcontainers:testcontainers:1.19.7")
+    testImplementation("org.testcontainers:junit-jupiter:1.19.7")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
+    testImplementation("io.mockk:mockk:1.13.9")
+    testImplementation("com.ninja-squad:springmockk:4.0.2")
+    testImplementation("org.jetbrains.kotlin:kotlin-test")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+    testImplementation("org.postgresql:postgresql:42.6.1")
 }
 
 tasks.withType<KotlinCompile> {
