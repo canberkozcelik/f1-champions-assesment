@@ -105,6 +105,51 @@ Why does linter have different configuration for test files?
 
 ## Local Development
 
+### Configuration Setup
+
+1. **Backend Configuration**
+   ```bash
+   # Copy the template configuration
+   cp backend/src/main/resources/application.yml.template backend/src/main/resources/application.yml
+   
+   # Edit the configuration as needed
+   # The template includes default values that work for local development
+   ```
+
+2. **Database Setup**
+   ```bash
+   # Run the setup script to configure the database
+   cd infrastructure/scripts
+   ./setup-local-env.sh
+   ```
+   This script will:
+   - Create a `.env` file with database settings
+   - Generate a secure database password
+   - Set up proper file permissions
+
+   The script creates these default environment variables:
+   - `DB_NAME`: Database name (default: env_f1db)
+   - `DB_USERNAME`: Database username (default: env_f1user)
+   - `POSTGRES_DATA_DIR`: PostgreSQL data directory
+
+   You can override these by editing the `.env` file after setup.
+
+3. **Environment Variables**
+   The application can be configured using environment variables. Key variables include:
+   - `SPRING_PROFILES_ACTIVE`: Set to 'dev' for development (default: 'prod')
+   - `SPRING_JPA_SHOW_SQL`: Enable/disable SQL logging (default: false)
+   - `SPRING_JPA_HIBERNATE_DDL_AUTO`: Database schema strategy (default: create)
+   - `SERVER_PORT`: Application port (default: 8080)
+   - `ERGAST_API_BASE_URL`: Ergast API endpoint (default: https://api.jolpi.ca/ergast/f1)
+
+   These can be set in your environment or in the `.env` file.
+
+4. **Security Notes**
+   - The generated database password is stored in `infrastructure/secrets/db_password.txt`
+   - This file is git-ignored and has restricted permissions (600)
+   - Never commit sensitive files to version control
+   - The template configuration uses default values suitable for local development  
+
 ### Prerequisites
 - Docker and Docker Compose
 - JDK 17
