@@ -87,6 +87,7 @@ jobs:
           console.log(`Found successful PR validation workflow run: ${run.id}`);
 
     - name: Download Android artifacts from PR
+      id: download-android
       uses: dawidd6/action-download-artifact@v2
       with:
         workflow: pr-validation.yml
@@ -94,7 +95,17 @@ jobs:
         name: android-build-artifacts
         path: ./artifacts
         token: ${{ secrets.GITHUB_TOKEN }}
-        if-no-files-found: error
+        if-no-files-found: warn  # Changed from error to warn
+
+    - name: Build Android if artifacts not found
+      if: steps.download-android.outcome == 'failure'
+      run: |
+        echo "No Android artifacts found, building from scratch..."
+        cd frontend
+        chmod +x gradlew
+        ./gradlew assembleDebug
+        mkdir -p ../artifacts/app/build/outputs/apk/dev/debug
+        cp app/build/outputs/apk/dev/debug/*.apk ../artifacts/app/build/outputs/apk/dev/debug/
 
     - name: Verify APK artifacts
       run: |
