@@ -14,18 +14,25 @@ USER builduser
 # Set GRADLE_USER_HOME to a directory we own
 ENV GRADLE_USER_HOME=/home/builduser/.gradle
 
+# Disable both Gradle and Kotlin daemons and set memory options
+ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dkotlin.daemon.enabled=false -Dorg.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError"
+
 # Copy only necessary files first to leverage cache
 COPY --chown=builduser:builduser backend/build.gradle.kts backend/settings.gradle.kts backend/gradlew backend/.editorconfig ./
 COPY --chown=builduser:builduser backend/gradle ./gradle
 
 # Download dependencies
+RUN ./gradlew --stop || true
+RUN ./gradlew clean
 RUN ./gradlew dependencies --no-daemon
 
 # Copy source code
 COPY --chown=builduser:builduser backend/src ./src
 
 # Build the application
-RUN ./gradlew build --no-daemon
+RUN ./gradlew --stop || true
+RUN ./gradlew clean
+RUN ./gradlew build --no-daemon --no-build-cache
 
 # Copy the entrypoint script and make it executable
 COPY --chown=builduser:builduser backend/src/main/docker/entrypoint.sh /app/entrypoint.sh
