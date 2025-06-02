@@ -16,42 +16,11 @@ env:
   APK_VERSION: ${{ github.sha }}
 
 jobs:
-  changes:
-    name: Detect Changes
-    runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true  # Only run if PR was merged
-    outputs:
-      backend_changed: ${{ steps.changed-files-backend.outputs.any_changed }}
-      frontend_changed: ${{ steps.changed-files-frontend.outputs.any_changed }}
-      workflow_changed: ${{ steps.changed-files-workflow.outputs.any_changed }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Get changed backend files
-        id: changed-files-backend
-        uses: tj-actions/changed-files@v44
-        with:
-          files: backend/**
-
-      - name: Get changed frontend files
-        id: changed-files-frontend
-        uses: tj-actions/changed-files@v44
-        with:
-          files: frontend/**
-
-      - name: Get changed workflow files
-        id: changed-files-workflow
-        uses: tj-actions/changed-files@v44
-        with:
-          files: .github/workflows/**
-
   publish-and-deploy:
     name: Publish Artifacts and Deploy
-    needs: changes
     if: github.event.pull_request.merged == true  # Only run if PR was merged
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: write  # Need this to create releases
       packages: write
@@ -212,6 +181,7 @@ jobs:
         platforms: linux/amd64, linux/arm64
         build-args: |
           DOCKER_BUILDKIT=1
+          GRADLE_OPTS=-Dorg.gradle.daemon=false -Dorg.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpOnOutOfMemoryError
           ERGAST_API_BASE_URL=${{ env.ERGAST_API_BASE_URL }}
           ERGAST_API_ENDPOINTS_DRIVER_STANDINGS=${{ env.ERGAST_API_ENDPOINTS_DRIVER_STANDINGS }}
           ERGAST_API_ENDPOINTS_RACE_RESULTS=${{ env.ERGAST_API_ENDPOINTS_RACE_RESULTS }}
@@ -233,3 +203,59 @@ jobs:
         if [ -d "infrastructure/secrets" ]; then
           rm -rf infrastructure/secrets/
         fi 
+
+  cleanup-images:
+    name: Cleanup Old Docker Images
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: publish-and-deploy
+    permissions:
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install regclient
+        run: |
+          curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64 -o regctl
+          chmod +x regctl
+          sudo mv regctl /usr/local/bin/
+
+      - name: Clean up old images
+        run: |
+          # Get current date for logging
+          echo "Starting image cleanup at $(date)"
+          
+          # Get all tags
+          TAGS=$(regctl tag ls ghcr.io/${{ env.IMAGE_NAME }})
+          
+          # Get tags to keep (last 3 + latest)
+          KEEP_TAGS=$(echo "$TAGS" | grep -v "latest" | sort -V | tail -n 3)
+          KEEP_TAGS="$KEEP_TAGS latest"
+          
+          # Log what we're keeping
+          echo "Keeping tags:"
+          echo "$KEEP_TAGS"
+          
+          # Delete old tags
+          echo "$TAGS" | while read tag; do
+            if [[ ! " $KEEP_TAGS " =~ " $tag " ]]; then
+              echo "Deleting tag: $tag"
+              regctl tag rm "ghcr.io/${{ env.IMAGE_NAME }}:$tag"
+            fi
+          done
+          
+          # Log completion
+          echo "Cleanup completed at $(date)"
+          
+          # Verify remaining tags
+          echo "Remaining tags:"
+          regctl tag ls ghcr.io/${{ env.IMAGE_NAME }}
