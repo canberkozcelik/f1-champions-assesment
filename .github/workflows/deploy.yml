@@ -209,6 +209,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: publish-and-deploy
+    continue-on-error: true
     permissions:
       packages: write
       contents: read
@@ -221,29 +222,57 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const { data: versions } = await github.rest.packages.getAllPackageVersionsForPackageOwnedByUser({
-              package_type: 'container',
-              package_name: 'f1-champions-assesment',
-              username: context.repo.owner
-            });
-            
-            // Keep latest, buildcache, and current commit
-            const keepTags = ['latest', 'buildcache', process.env.GITHUB_SHA];
-            const versionsToDelete = versions.filter(v => 
-              !keepTags.includes(v.metadata.container.tags[0]) && 
-              !v.metadata.container.tags[0].startsWith('sha-')
-            );
-            
-            return versionsToDelete.map(v => ({
-              id: v.id,
-              tag: v.metadata.container.tags[0]
-            }));
+            try {
+              const { data: versions } = await github.rest.packages.getAllPackageVersionsForPackageOwnedByUser({
+                package_type: 'container',
+                package_name: 'f1-champions-assesment',
+                username: context.repo.owner
+              });
+              
+              console.log('Found versions:', versions.length);
+              
+              // Keep latest, buildcache, and current commit
+              const keepTags = ['latest', 'buildcache', process.env.GITHUB_SHA];
+              const versionsToDelete = versions.filter(v => {
+                // Skip if no tags or metadata
+                if (!v.metadata?.container?.tags?.length) {
+                  console.log('Skipping version with no tags:', v.id);
+                  return false;
+                }
+                
+                const tag = v.metadata.container.tags[0];
+                const shouldKeep = keepTags.includes(tag) || tag.startsWith('sha-');
+                
+                if (shouldKeep) {
+                  console.log('Keeping version with tag:', tag);
+                }
+                
+                return !shouldKeep;
+              });
+              
+              console.log('Versions to delete:', versionsToDelete.length);
+              
+              return versionsToDelete.map(v => ({
+                id: v.id,
+                tag: v.metadata.container.tags[0]
+              }));
+            } catch (error) {
+              console.error('Error fetching package versions:', error);
+              core.setFailed('Failed to fetch package versions: ' + error.message);
+              return [];
+            }
 
       - name: Delete old versions
         uses: actions/github-script@v7
         with:
           script: |
             const versionsToDelete = ${{ steps.get-versions.outputs.result }};
+            
+            if (!versionsToDelete || versionsToDelete.length === 0) {
+              console.log('No versions to delete');
+              return;
+            }
+            
             console.log('Versions to delete:', versionsToDelete);
             
             for (const version of versionsToDelete) {
@@ -257,5 +286,6 @@ jobs:
                 console.log(`Successfully deleted version: ${version.tag}`);
               } catch (error) {
                 console.error(`Failed to delete version ${version.tag}:`, error.message);
+                // Don't fail the job on individual deletion failures
               }
             }
