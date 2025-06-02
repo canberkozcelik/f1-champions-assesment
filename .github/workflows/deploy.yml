@@ -118,7 +118,7 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
       with:
-        platforms: linux/amd64, linux/arm64
+        platforms: linux/amd64
         driver-opts: |
           image=moby/buildkit:master
           network=host
@@ -178,7 +178,7 @@ jobs:
         tags: |
           ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-        platforms: linux/amd64, linux/arm64
+        platforms: linux/amd64
         build-args: |
           DOCKER_BUILDKIT=1
           ERGAST_API_BASE_URL=${{ env.ERGAST_API_BASE_URL }}

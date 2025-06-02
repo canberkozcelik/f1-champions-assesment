@@ -167,7 +167,33 @@ Why does linter have different configuration for test files?
    docker compose logs -f
    ```
 
-2. **Run the Android App**
+2. **Architecture-Specific Builds**
+   The official Docker images are built for linux/amd64 architecture. If you're running on a different architecture (like Apple Silicon/M1/M2), you have two options:
+
+   a. **Use the official image with emulation:**
+   ```bash
+   # This will use QEMU emulation automatically
+   docker compose up -d
+   ```
+   Note: This might be slower than a native build.
+
+   b. **Build locally for your architecture:**
+   ```bash
+   # Build the image for your architecture
+   docker build -t f1-champions-backend:local \
+     --platform linux/$(uname -m | sed 's/x86_64/amd64/;s/arm64/arm64/') \
+     -f infrastructure/Dockerfile .
+
+   # Update docker-compose.yml to use your local image
+   # Replace the image line with:
+   # image: f1-champions-backend:local
+   
+   # Then start the services
+   docker compose up -d
+   ```
+   This will build a native image for your architecture, which will run faster than the emulated version.
+
+3. **Run the Android App**
    - Open the project in Android Studio
    - Select the `app` module
    - Choose a device/emulator
