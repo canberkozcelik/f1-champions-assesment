@@ -26,7 +26,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         ex: IllegalArgumentException,
         request: WebRequest
     ): ResponseEntity<ErrorResponse> {
-        logger.warn("Invalid argument: ${ex.message}")
+        logger.debug("Invalid argument: ${ex.message}")
         return createErrorResponse(
             HttpStatus.BAD_REQUEST,
             "Bad Request",
@@ -40,7 +40,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         ex: NoSuchElementException,
         request: WebRequest
     ): ResponseEntity<ErrorResponse> {
-        logger.warn("Resource not found: ${ex.message}")
+        logger.debug("Resource not found: ${ex.message}")
         return createErrorResponse(
             HttpStatus.NOT_FOUND,
             "Not Found",
@@ -54,7 +54,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         ex: IllegalStateException,
         request: WebRequest
     ): ResponseEntity<ErrorResponse> {
-        logger.error("Internal server error: ${ex.message}", ex)
+        logger.error("Internal server error", ex)
         return createErrorResponse(
             HttpStatus.INTERNAL_SERVER_ERROR,
             "Internal Server Error",
@@ -68,7 +68,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         ex: WebClientResponseException,
         request: WebRequest
     ): ResponseEntity<ErrorResponse> {
-        logger.error("External API error: ${ex.message}", ex)
+        logger.error("External API error", ex)
         return createErrorResponse(
             HttpStatus.SERVICE_UNAVAILABLE,
             "Service Unavailable",
@@ -82,7 +82,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         ex: Exception,
         request: WebRequest
     ): ResponseEntity<ErrorResponse> {
-        logger.error("Unhandled exception: ${ex.message}", ex)
+        logger.error("Unhandled exception", ex)
         return createErrorResponse(
             HttpStatus.INTERNAL_SERVER_ERROR,
             "Internal Server Error",
@@ -96,7 +96,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         ex: ErgastApiServiceUnavailableException,
         request: WebRequest
     ): ResponseEntity<ErrorResponse> {
-        logger.error("Ergast API service unavailable: ${ex.message}", ex)
+        logger.error("Ergast API service unavailable", ex)
         return createErrorResponse(
             HttpStatus.SERVICE_UNAVAILABLE,
             "Service Unavailable",
@@ -110,7 +110,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         ex: ErgastApiDataNotFoundException,
         request: WebRequest
     ): ResponseEntity<ErrorResponse> {
-        logger.warn("Ergast API data not found: ${ex.message}")
+        logger.debug("Ergast API data not found: ${ex.message}")
         return createErrorResponse(
             HttpStatus.NOT_FOUND,
             "Not Found",
@@ -124,7 +124,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         ex: ErgastApiRateLimitException,
         request: WebRequest
     ): ResponseEntity<ErrorResponse> {
-        logger.warn("Ergast API rate limit exceeded: ${ex.message}")
+        logger.debug("Ergast API rate limit exceeded")
         val headers = HttpHeaders()
         ex.retryAfterSeconds?.let { seconds ->
             headers.set("Retry-After", seconds.toString())
@@ -143,7 +143,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         ex: ErgastApiInvalidResponseException,
         request: WebRequest
     ): ResponseEntity<ErrorResponse> {
-        logger.error("Ergast API invalid response: ${ex.message}", ex)
+        logger.error("Ergast API invalid response", ex)
         return createErrorResponse(
             HttpStatus.BAD_GATEWAY,
             "Bad Gateway",
@@ -157,7 +157,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         ex: ErgastApiException,
         request: WebRequest
     ): ResponseEntity<ErrorResponse> {
-        logger.error("Ergast API error: ${ex.message}", ex)
+        logger.error("Ergast API error", ex)
         return createErrorResponse(
             HttpStatus.INTERNAL_SERVER_ERROR,
             "Internal Server Error",
@@ -171,7 +171,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         ex: PSQLException,
         request: WebRequest
     ): ResponseEntity<ErrorResponse> {
-        logger.error("Database error: ${ex.message}", ex)
+        logger.error("Database error", ex)
         return when (ex.sqlState) {
             PSQLState.CONNECTION_REJECTED.state -> {
                 createErrorResponse(
@@ -181,7 +181,6 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
                     request
                 )
             }
-
             else -> {
                 createErrorResponse(
                     HttpStatus.INTERNAL_SERVER_ERROR,
@@ -198,7 +197,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         ex: UnknownHostException,
         request: WebRequest
     ): ResponseEntity<ErrorResponse> {
-        logger.error("Database host unreachable: ${ex.message}", ex)
+        logger.error("Database host unreachable", ex)
         return createErrorResponse(
             HttpStatus.SERVICE_UNAVAILABLE,
             "Service Unavailable",
@@ -212,7 +211,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         ex: DataAccessResourceFailureException,
         request: WebRequest
     ): ResponseEntity<ErrorResponse> {
-        logger.error("Database resource failure: ${ex.message}", ex)
+        logger.error("Database resource failure", ex)
         return createErrorResponse(
             HttpStatus.SERVICE_UNAVAILABLE,
             "Service Unavailable",
@@ -226,7 +225,7 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
         ex: SQLException,
         request: WebRequest
     ): ResponseEntity<ErrorResponse> {
-        logger.error("SQL error: ${ex.message}", ex)
+        logger.error("SQL error", ex)
         return when {
             ex.message?.contains("Connection refused") == true ||
                 ex.message?.contains("Connection to") == true ||
@@ -238,7 +237,6 @@ class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
                     request
                 )
             }
-
             else -> {
                 createErrorResponse(
                     HttpStatus.INTERNAL_SERVER_ERROR,
