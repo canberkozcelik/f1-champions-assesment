@@ -211,47 +211,51 @@ jobs:
     needs: publish-and-deploy
     permissions:
       packages: write
+      contents: read
     steps:
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
+      - name: Get current date for logging
+        run: echo "Starting image cleanup at $(date)"
+
+      - name: Get package versions
+        id: get-versions
+        uses: actions/github-script@v7
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: versions } = await github.rest.packages.getAllPackageVersionsForPackageOwnedByUser({
+              package_type: 'container',
+              package_name: 'f1-champions-assesment',
+              username: context.repo.owner
+            });
+            
+            // Keep latest, buildcache, and current commit
+            const keepTags = ['latest', 'buildcache', process.env.GITHUB_SHA];
+            const versionsToDelete = versions.filter(v => 
+              !keepTags.includes(v.metadata.container.tags[0]) && 
+              !v.metadata.container.tags[0].startsWith('sha-')
+            );
+            
+            return versionsToDelete.map(v => ({
+              id: v.id,
+              tag: v.metadata.container.tags[0]
+            }));
 
-      - name: Install regclient
-        run: |
-          curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64 -o regctl
-          chmod +x regctl
-          sudo mv regctl /usr/local/bin/
-
-      - name: Clean up old images
-        run: |
-          # Get current date for logging
-          echo "Starting image cleanup at $(date)"
-          
-          # Get all tags
-          TAGS=$(regctl tag ls ghcr.io/${{ env.IMAGE_NAME }})
-          
-          # Get tags to keep (last 3 + latest)
-          KEEP_TAGS=$(echo "$TAGS" | grep -v "latest" | sort -V | tail -n 3)
-          KEEP_TAGS="$KEEP_TAGS latest"
-          
-          # Log what we're keeping
-          echo "Keeping tags:"
-          echo "$KEEP_TAGS"
-          
-          # Delete old tags
-          echo "$TAGS" | while read tag; do
-            if [[ ! " $KEEP_TAGS " =~ " $tag " ]]; then
-              echo "Deleting tag: $tag"
-              regctl tag rm "ghcr.io/${{ env.IMAGE_NAME }}:$tag"
-            fi
-          done
-          
-          # Log completion
-          echo "Cleanup completed at $(date)"
-          
-          # Verify remaining tags
-          echo "Remaining tags:"
-          regctl tag ls ghcr.io/${{ env.IMAGE_NAME }}
+      - name: Delete old versions
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const versionsToDelete = ${{ steps.get-versions.outputs.result }};
+            console.log('Versions to delete:', versionsToDelete);
+            
+            for (const version of versionsToDelete) {
+              try {
+                await github.rest.packages.deletePackageVersionForUser({
+                  package_type: 'container',
+                  package_name: 'f1-champions-assesment',
+                  username: context.repo.owner,
+                  package_version_id: version.id
+                });
+                console.log(`Successfully deleted version: ${version.tag}`);
+              } catch (error) {
+                console.error(`Failed to delete version ${version.tag}:`, error.message);
+              }
+            }
