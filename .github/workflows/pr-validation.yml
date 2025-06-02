@@ -54,6 +54,7 @@ jobs:
   build-and-test-backend:
     name: Build and Test Backend
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: changes
     if: |
       (needs.changes.outputs.backend_changed == 'true' || 
@@ -92,6 +93,7 @@ jobs:
   build-and-test-android:
     name: Build and Test Android Project
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: changes
     # Always build when targeting main, or when frontend/workflow changes
     if: |
