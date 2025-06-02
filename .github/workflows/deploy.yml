@@ -181,6 +181,7 @@ jobs:
         platforms: linux/amd64, linux/arm64
         build-args: |
           DOCKER_BUILDKIT=1
+          GRADLE_OPTS=-Dorg.gradle.daemon=false -Dorg.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpOnOutOfMemoryError
           ERGAST_API_BASE_URL=${{ env.ERGAST_API_BASE_URL }}
           ERGAST_API_ENDPOINTS_DRIVER_STANDINGS=${{ env.ERGAST_API_ENDPOINTS_DRIVER_STANDINGS }}
           ERGAST_API_ENDPOINTS_RACE_RESULTS=${{ env.ERGAST_API_ENDPOINTS_RACE_RESULTS }}
