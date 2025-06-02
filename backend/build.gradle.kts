@@ -37,9 +37,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
 
     // Database
-    runtimeOnly("org.postgresql:postgresql")
+    implementation("org.postgresql:postgresql")
     runtimeOnly("com.h2database:h2")
-    implementation("org.postgresql:postgresql:42.6.1")
 
     // API Documentation
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0")
@@ -51,7 +50,7 @@ dependencies {
     testImplementation("com.ninja-squad:springmockk:4.0.2")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-    testImplementation("org.postgresql:postgresql:42.6.1")
+    testImplementation("org.postgresql:postgresql")
 
     // Resilience4j
     implementation("io.github.resilience4j:resilience4j-ratelimiter:2.1.0")
@@ -59,9 +58,6 @@ dependencies {
     implementation("io.github.resilience4j:resilience4j-kotlin:2.1.0")
     implementation("io.github.resilience4j:resilience4j-reactor:2.1.0")
     implementation("io.github.resilience4j:resilience4j-micrometer:2.1.0")
-
-    // Test dependencies
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 
 tasks.withType<KotlinCompile> {

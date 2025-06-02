@@ -45,16 +45,15 @@ class F1DataServiceImpl(
         val yearsToFetch = (2005..currentYear).filter { it !in existingSeasons }
 
         if (yearsToFetch.isEmpty()) {
-            logger.info("All seasons from 2005 to $currentYear are already populated")
+            logger.debug("All seasons from 2005 to $currentYear are already populated")
             return true
         }
 
-        logger.info("Starting to populate data for years: ${yearsToFetch.joinToString()}")
+        logger.info("Populating data for years: ${yearsToFetch.joinToString()}")
         var dataFetched = false
 
         yearsToFetch.forEach { year ->
             try {
-                logger.info("Processing year $year")
                 val standings = fetchDriverStandingsWithRetry(year)
                 val championData = standings.mrData.standingsTable.standingsLists.first()
                 val driverStanding = championData.driverStandings.first()
@@ -75,23 +74,20 @@ class F1DataServiceImpl(
                         championWins = wins
                     )
                     seasonRepository.save(seasonEntity)
-                    logger.info("Successfully saved season data for year $year")
                     dataFetched = true
                 } catch (e: Exception) {
-                    logger.error("Error processing driver standings data for year $year: ${e.message}")
+                    logger.error("Error processing driver standings data for year $year", e)
                     throw ErgastApiInvalidResponseException(
-                        "Invalid points or wins format in response for year $year. " +
-                            "Points: '${driverStanding.points}', Wins: '${driverStanding.wins}'",
+                        "Invalid points or wins format in response for year $year",
                         e
                     )
                 }
-            } catch (e: ErgastApiException) {
-                logger.error("Error fetching season data for year $year: ${e.message}")
+            } catch (e: Exception) {
+                logger.error("Error fetching season data for year $year", e)
                 // Continue to next year
             }
         }
 
-        logger.info("Finished populating data. Successfully fetched data: $dataFetched")
         return dataFetched
     }
 

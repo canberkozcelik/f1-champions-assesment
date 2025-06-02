@@ -23,7 +23,6 @@ class RateLimiterService(
                 }
             }
         } catch (e: Exception) {
-            logger.error("Rate limit exceeded for Ergast API: ${e.message}")
             throw e
         }
     }

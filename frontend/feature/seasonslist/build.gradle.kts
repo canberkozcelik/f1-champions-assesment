@@ -62,8 +62,9 @@ dependencies {
 
     // Lifecycle KTX (for ViewModels)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
-    implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
 
     // Kotlin Coroutines
     implementation(libs.kotlinx.coroutines.android)
