@@ -468,6 +468,13 @@ This workflow runs when a pull request to the `main` branch is merged.
 - Release history is maintained in GitHub Releases
 - Docker image versions are tracked in GHCR  
 
+### Test Coverage
+   Test coverage reports are generated automatically for each pull request and can be accessed from the GitHub Actions workflow:
+   1. Go to the "Actions" tab in the repository
+   2. Select the latest successful workflow run
+   3. Download the following artifacts:
+      - `backend-coverage-report` for backend coverage
+      - `android-coverage-reports` for Android coverage
 
 #### Screenshots
 
