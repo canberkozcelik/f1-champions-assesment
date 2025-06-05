@@ -88,6 +88,8 @@ A mobile application that displays F1 champions and race winners, with a backend
      - Cons: Manual installation required
 
 ## Developer Notes  
+- This assignment is developer with the help of AI tools.  
+
 ### Backend  
 
 Hybrid Approach for the Backend:  
