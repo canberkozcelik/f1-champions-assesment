@@ -169,6 +169,13 @@ Why does linter have different configuration for test files?
    docker compose logs -f
    ```
 
+   > **Important Note:** When starting the backend for the first time, it will fetch initial F1 data from the Ergast API. This process might take a few minutes as it:
+   > - Fetches all seasons data (2005-present)
+   > - Populates the database with champions and race results
+   > - Implements rate limiting to respect the API's limits
+   > 
+   > Please wait until you see log messages indicating successful data population before proceeding with the Android app. You can monitor the progress in the logs using `docker compose logs -f`.
+
 2. **Architecture-Specific Builds**
    The official Docker images are built for linux/amd64 architecture. If you're running on a different architecture (like Apple Silicon/M1/M2), you have two options:
 
