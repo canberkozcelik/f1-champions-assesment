@@ -1,6 +1,7 @@
 package com.f1champions.util
 
 import com.f1champions.exception.ErgastApiException
+import com.f1champions.exception.ErgastApiRateLimitException
 import io.github.resilience4j.ratelimiter.RequestNotPermitted
 import kotlinx.coroutines.delay
 import org.slf4j.LoggerFactory
@@ -27,6 +28,7 @@ object RetryUtil {
                 val isRateLimitError = when (e) {
                     is IllegalStateException -> e.message?.contains("Rate limit exceeded", ignoreCase = true) == true
                     is RequestNotPermitted -> true
+                    is ErgastApiRateLimitException -> true
                     else -> false
                 }
 
