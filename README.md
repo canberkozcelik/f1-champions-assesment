@@ -88,12 +88,12 @@ A mobile application that displays F1 champions and race winners, with a backend
      - Cons: Manual installation required
 
 ## Developer Notes  
-- This assignment is developer with the help of AI tools.  
+- This assignment is developed with the help of AI tools.  
 
 ### Backend  
 
 Hybrid Approach for the Backend:  
-- Seasons/Champions Data: You opted to pre-load this data when the backend application starts (using the DataInitializer and its @PostConstruct method calling f1DataService.ensureSeasonsDataPopulated()). This was a trade-off to ensure the frontend's initial screen (displaying the list of seasons and champions via GET /api/seasons) loads quickly for a better user experience, at the cost of a slightly longer backend startup time.  
+- Seasons/Champions Data: You opted to pre-load this data when the backend application starts (using the DataInitializer and its @PostConstruct method, calling f1DataService.ensureSeasonsDataPopulated()). This was a trade-off to ensure the frontend's initial screen (displaying the list of seasons and champions via GET /api/seasons) loads quickly for a better user experience, at the cost of a slightly longer backend startup time.  
 - Races/Winners Data (for a specific season): This data would be fetched from the Ergast API "on the first request" for that specific season's races (via GET /api/seasons/{year}/races), if not already present in your database. For race data, fetching on demand was deemed simpler to implement initially and avoided an even longer backend startup if all races for all seasons were pre-fetched.  
 
 Retry utility written in pure Kotlin for coroutines:  
@@ -502,7 +502,7 @@ The application consists of two main screens:
    - Shows all race winners for a selected season
    - Displays race name, date, and winner details
    - Highlights the winner if he's also the season's champion
-   - Includes navigation back to seasons list  
+   - Includes navigation back to the seasons list  
 
 
 #### Building and Testing
@@ -530,14 +530,14 @@ The application consists of two main screens:
 #### Development Guidelines
 
 1. **Code Style**
-   - Follow Kotlin style guide
+   - Follow the Kotlin style guide
    - Use ktlint for code formatting
    - Follow Material Design guidelines for UI
 
 2. **Testing**
    - Write unit tests for all business logic
    - Use MockK for mocking
-   - Maintain minimum 70% code coverage
+   - Maintain a minimum 70% code coverage
    - Test both success and error cases
 
 3. **Architecture**
